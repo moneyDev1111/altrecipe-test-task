@@ -8,6 +8,7 @@ const tokens = [
 	{ symbol: 'DAI', decimals: '18', address: '0x6B175474E89094C44Da98b954EedeAC495271d0F' },
 	{ symbol: 'WBTC', decimals: '8', address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
 ];
+
 export const SwapCard = () => {
 	const [tokenFrom, setTokenFrom] = useState('ETH');
 	const [tokenTo, setTokenTo] = useState('USDT');
@@ -34,7 +35,6 @@ export const SwapCard = () => {
 				padding: '1em',
 				display: 'flex',
 				flexDirection: 'column',
-				// maxWidth: 'fit-content',
 				width: '10%',
 				margin: '0 auto',
 				gap: '2vh',

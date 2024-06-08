@@ -30,3 +30,6 @@ button.btn-wallet__connect {
 		background-color: rgb(37, 24, 47);
 	}
 }
+div.card-swap {
+	box-shadow: hsl(0deg 0% 95.12% / 14%) 3px 3px;
+}

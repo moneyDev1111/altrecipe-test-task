@@ -13,7 +13,7 @@ export const SwapCard = () => {
 	const [tokenTo, setTokenTo] = useState('USDT');
 
 	const mappedTokensFrom = tokens
-		.filter((token) => token.address !== tokenTo)
+		.filter((token) => token.symbol !== tokenTo)
 		.map((token, index) => (
 			<MenuItem key={index} value={token.symbol}>
 				{token.symbol}
@@ -21,7 +21,7 @@ export const SwapCard = () => {
 		));
 
 	const mappedTokensTo = tokens
-		.filter((token) => token.address !== tokenFrom)
+		.filter((token) => token.symbol !== tokenFrom)
 		.map((token, index) => (
 			<MenuItem key={index} value={token.symbol}>
 				{token.symbol}
@@ -29,7 +29,19 @@ export const SwapCard = () => {
 		));
 
 	return (
-		<Card sx={{ padding: '1em', display: 'flex', flexDirection: 'column', width: '20%', margin: '0 auto', gap: '2vh' }}>
+		<Card
+			sx={{
+				padding: '1em',
+				display: 'flex',
+				flexDirection: 'column',
+				// maxWidth: 'fit-content',
+				width: 'fit-content',
+				margin: '0 auto',
+				gap: '2vh',
+				borderRadius: '10px',
+			}}
+			className="card-swap"
+		>
 			<FormControl>
 				<InputLabel id="from-select-label">From</InputLabel>
 				<Select labelId="from-select-label" value={tokenFrom} label="From" onChange={(e) => setTokenFrom(e.target.value)}>

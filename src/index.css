@@ -3,5 +3,30 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 
 	background: linear-gradient(8deg, rgba(20, 14, 35, 0.702) 0%, rgb(9, 3, 12) 100%) fixed,
-		radial-gradient(circle, rgba(185, 182, 189, 0.5) 0%, rgb(36, 29, 40) 100%) fixed;
+		radial-gradient(circle, rgba(185, 182, 189, 0.75) 30%, rgb(36, 29, 40) 100%) fixed;
+}
+
+button.btn-wallet__connect {
+	padding: 0.65em;
+	background-color: rgb(30, 19, 40);
+	color: inherit;
+
+	font-size: 1.1rem;
+	text-transform: none;
+	&:hover {
+		animation: colorChange 1s forwards;
+		background-color: rgb(29, 19, 37);
+	}
+}
+
+@keyframes colorChange {
+	0% {
+		background-color: rgb(29, 19, 37);
+	}
+	20% {
+		background-color: rgb(58, 39, 75);
+	}
+	100% {
+		background-color: rgb(37, 24, 47);
+	}
 }

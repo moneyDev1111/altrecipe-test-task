@@ -35,7 +35,7 @@ export const SwapCard = () => {
 				display: 'flex',
 				flexDirection: 'column',
 				// maxWidth: 'fit-content',
-				width: 'fit-content',
+				width: '10%',
 				margin: '0 auto',
 				gap: '2vh',
 				borderRadius: '10px',

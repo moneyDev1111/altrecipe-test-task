@@ -21,7 +21,7 @@ export const SwapCard = () => {
 
 	const [tokenFrom, setTokenFrom] = useState('ETH');
 	const [tokenTo, setTokenTo] = useState('USDT');
-	const [amountFrom, setAmountFrom] = useState('0.0');
+	const [amountFrom, setAmountFrom] = useState('');
 	const [tokenBalance, setTokenBalance] = useState('');
 	const [wallet, setWallet] = useState<Wallet>();
 	const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -78,7 +78,7 @@ export const SwapCard = () => {
 					id="outlined-from"
 					label="Amount From"
 					type="number"
-					value={amountFrom}
+					value={amountFrom !== '0' ? amountFrom : ''}
 					onChange={(e) => setAmountFrom(e.target.value)}
 				/>
 				<FormControl sx={{ width: '7vw' }}>
@@ -98,7 +98,6 @@ export const SwapCard = () => {
 					</Select>
 				</FormControl>
 			</Box>
-
 			<Box display="flex" justifyContent="center" alignItems={'center'} gap={'1em'} mt={'0.5em'}>
 				<Box component={'span'} width={'70%'}>
 					<Slider
@@ -107,15 +106,21 @@ export const SwapCard = () => {
 						}}
 						sx={{ width: '90%', margin: '0 auto', display: 'table' }}
 						aria-label="amount"
-						defaultValue={0}
 						valueLabelDisplay="auto"
 						min={0}
 						step={0.000000000000000001}
-						value={parseFloat(amountFrom)}
-						max={parseFloat(tokenBalance)}
+						value={amountFrom ? parseFloat(amountFrom) : 0}
+						max={tokenBalance ? parseFloat(tokenBalance) : 0}
 					/>
 				</Box>
-				<Button variant="contained">Max</Button>
+				<Button
+					onClick={() => {
+						setAmountFrom(tokenBalance);
+					}}
+					variant="contained"
+				>
+					Max
+				</Button>
 			</Box>
 		</Card>
 	);

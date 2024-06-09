@@ -73,7 +73,7 @@ export const SwapCard = () => {
 		>
 			<Box display="flex" flexDirection="row" component="form" noValidate autoComplete="off">
 				<TextField
-					// InputLabelProps={{ hidden: true }}
+					InputProps={{ inputProps: { min: 0, max: tokenBalance, step: '0.0001' } }}
 					fullWidth
 					id="outlined-from"
 					label="Amount From"
@@ -98,6 +98,7 @@ export const SwapCard = () => {
 					</Select>
 				</FormControl>
 			</Box>
+
 			<Box display="flex" justifyContent="center" alignItems={'center'} gap={'1em'} mt={'0.5em'}>
 				<Box component={'span'} width={'70%'}>
 					<Slider

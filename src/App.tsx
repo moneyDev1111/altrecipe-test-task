@@ -15,7 +15,7 @@ const mainnet = {
 	name: 'Ethereum',
 	currency: 'ETH',
 	explorerUrl: 'https://etherscan.io',
-	rpcUrl: 'https://eth.llamarpc.com',
+	rpcUrl: 'https://cloudflare-eth.com',
 };
 
 // 3. Create a metadata object
@@ -58,7 +58,7 @@ export default function App() {
 	return (
 		<Container sx={{ minHeight: '100vh', width: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 			<Box>
-				<Box display="flex" my={1} justifyContent={'flex-end'}>
+				<Box display="flex" my={1} justifyContent="flex-end">
 					{/* <Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
 						Connect Wallet
 					</Button> */}

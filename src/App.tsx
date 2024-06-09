@@ -15,7 +15,7 @@ const mainnet = {
 	name: 'Ethereum',
 	currency: 'ETH',
 	explorerUrl: 'https://etherscan.io',
-	rpcUrl: 'https://cloudflare-eth.com',
+	rpcUrl: 'https://eth.llamarpc.com',
 };
 
 // 3. Create a metadata object
@@ -53,21 +53,22 @@ createWeb3Modal({
 });
 
 export default function App() {
-	const { open } = useWeb3Modal();
+	// const { open } = useWeb3Modal();
+
 	return (
 		<Container sx={{ minHeight: '100vh', width: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 			<Box>
 				<Box display="flex" my={1} justifyContent={'flex-end'}>
-					<Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
+					{/* <Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
 						Connect Wallet
-					</Button>
+					</Button> */}
+					<w3m-button />
 				</Box>
 			</Box>
 			<Box minHeight="90%" sx={{ overflow: 'visible' }}>
 				<SwapCard />
 			</Box>
 			<Box textAlign={'center'} fontSize={12} color={'#514F53'}>
-				{' '}
 				{`DegenDex ${new Date().getFullYear()}`}
 			</Box>
 		</Container>

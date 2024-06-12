@@ -12,7 +12,6 @@ const root = createRoot(document.getElementById('root')!);
 root.render(
 	<>
 		<ThemeProvider theme={createTheme({ palette: { mode: 'dark', text: { primary: '#C7C7C7' } }, typography: { fontFamily: 'monospace' } })}>
-			{/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
 			<CssBaseline />
 			<App />
 		</ThemeProvider>

@@ -1,10 +1,24 @@
-import { Alert, Box, Button, Card, CircularProgress, FormControl, InputLabel, MenuItem, Select, Slider, TextField } from '@mui/material';
-import { BaseContract, BrowserProvider, Contract, Eip1193Provider, formatUnits, parseUnits } from 'ethers';
+import {
+	Alert,
+	Box,
+	Button,
+	Card,
+	CircularProgress,
+	FormControl,
+	InputLabel,
+	MenuItem,
+	Select,
+	Slider,
+	Snackbar,
+	TextField,
+	Tooltip,
+} from '@mui/material';
+import { BrowserProvider, Contract, Eip1193Provider, formatEther, formatUnits, parseUnits } from 'ethers';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import SwapVerticalCircleOutlinedIcon from '@mui/icons-material/SwapVerticalCircleOutlined';
-import { inUSD } from '../data/helpers';
+import { checkPriceImpact, inUSD } from '../data/helpers';
 
 export const SwapCard = ({
 	isConnected,
@@ -32,58 +46,50 @@ export const SwapCard = ({
 	const [isLoading, setIsLoading] = useState(false);
 	const [openSnack, setOpenSnack] = useState(false);
 
-	const [amountFrom, setAmountFrom] = useState('');
+	const [amountFrom, setAmountFrom] = useState('0');
 	const [amountTo, setAmountTo] = useState('');
 	// const { enqueueSnackbar } = useSnackbar();
 	const [feeUSD, setFeeUSD] = useState('');
-	const [feeAmountOutUSD, setAmountOutUSD] = useState('');
+	const [AmountOutUSD, setAmountOutUSD] = useState('');
 
 	const sendTx = async () => {
 		setIsLoading(true);
 
 		try {
+			const provider = new BrowserProvider(walletProvider!);
+			const signer = await provider.getSigner();
+
+			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address;
+			const WETH_Contract = new Contract(tokenAddress!, WETH_ABI);
+
 			if (tokenFrom === 'ETH' && tokenTo === 'WETH' && walletProvider) {
-				const provider = new BrowserProvider(walletProvider!);
-				const signer = await provider.getSigner();
-				const tokenAddress = tokens.find((token) => token.symbol === tokenFrom)?.address;
+				//@ts-ignore
+				const res = await WETH_Contract.connect(signer).deposit({ value: parseUnits(amountFrom, 18) });
 
-				const WETH_Contract = new Contract(tokenAddress!, WETH_ABI, provider);
+				const txRes = await res.wait();
 
-				// //@ts-ignore
-				// const res = await WETH_Contract.connect(signer).withdraw({ value: amountFrom });
+				console.log(txRes);
 
-				// const txRes = await res.wait();
+				if (txRes.status === 1) {
+					setIsLoading(false);
 
-				// console.log(txRes);
-
-				// if (txRes.status === '1') {
-				// 	setIsLoading(false);
-
-				// 	setOpenSnack(true);
-				// }
-				await new Promise((r) => setTimeout(r, 5000));
-				setIsLoading(false);
+					setOpenSnack(true);
+					setOpenSnack(false);
+				}
 			} else {
-				const provider = new BrowserProvider(walletProvider!);
-				const signer = await provider.getSigner();
-				const tokenAddress = tokens.find((token) => token.symbol === tokenFrom)?.address;
+				//@ts-ignore
+				const res = await WETH_Contract.connect(signer).withdraw(parseUnits(amountFrom, 18));
 
-				const WETH_Contract = new Contract(tokenAddress!, WETH_ABI, provider);
+				const txRes = await res.wait();
 
-				// //@ts-ignore
-				// const res = await WETH_Contract.connect(signer).withdraw({ value: amountFrom });
+				console.log(txRes);
 
-				// const txRes = await res.wait();
+				if (txRes.status === 1) {
+					setIsLoading(false);
 
-				// console.log(txRes);
-
-				// if (txRes.status === '1') {
-				// 	setIsLoading(false);
-
-				// 	setOpenSnack(true);
-				// }
-				await new Promise((r) => setTimeout(r, 5000));
-				setIsLoading(false);
+					setOpenSnack(true);
+					setOpenSnack(false);
+				}
 			}
 		} catch (error) {
 			setIsLoading(false);
@@ -109,7 +115,9 @@ export const SwapCard = ({
 					};
 
 					const fee = await provider.estimateGas(tx);
+
 					console.log('FEE', fee);
+
 					const amountOut = parseUnits(amountFrom, decimals) - fee;
 					return { fee, amountOut, decimals };
 				}
@@ -147,20 +155,23 @@ export const SwapCard = ({
 	useEffect(() => {
 		debounceRef.current && clearTimeout(debounceRef.current);
 
-		if (amountFrom) {
+		if (+amountFrom > 0) {
 			debounceRef.current = setTimeout(async () => {
 				const res = await estimateFees();
 				if (res) {
 					const { fee, amountOut, decimals } = res;
 					setAmountTo(formatUnits(amountOut, decimals));
 
-					setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
-					await new Promise((r) => setTimeout(r, 1000));
-					setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '');
+					setAmountOutUSD(await checkPriceImpact(formatEther(amountOut - fee)));
+					// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
+					// await new Promise((r) => setTimeout(r, 1000));
+					// setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '');
+					// console.log('IN USD', (await inUSD(formatUnits(amountOut, decimals))) ?? '');
 				}
 			}, 300);
+		} else {
+			setAmountTo(amountFrom);
 		}
-
 		return () => clearTimeout(debounceRef.current);
 	}, [amountFrom]);
 
@@ -252,6 +263,14 @@ export const SwapCard = ({
 				</FormControl>
 			</Box>
 
+			{amountFrom !== '0' && (
+				<Tooltip title="No rate limit ( 1inch price aggregator smart contract )" placement="top">
+					<Box component={'p'} padding={0} margin={0} fontSize={'0.75rem'} textAlign={'center'} paddingTop={'0.3em'}>
+						The receive tokens amount is ~ <span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
+					</Box>
+				</Tooltip>
+			)}
+
 			<Box display="flex" justifyContent="center" alignItems={'center'} gap={'1em'} mt={'1em'}>
 				<Box component={'span'} width={'70%'}>
 					<Slider
@@ -276,9 +295,8 @@ export const SwapCard = ({
 					Max
 				</Button>
 			</Box>
-
 			<Button
-				disabled={isLoading}
+				disabled={isLoading || amountFrom === '0'}
 				variant="outlined"
 				endIcon={!isLoading ? <AccountBalanceWalletIcon /> : null}
 				sx={{ fontSize: '1.25rem', width: '75%', margin: '1em auto 0 auto' }}
@@ -294,6 +312,9 @@ export const SwapCard = ({
 					)
 				) : (
 					<>
+						<Box component={'span'} marginRight={'0.7em'}>
+							Sending Tx...
+						</Box>
 						<svg width={0} height={0}>
 							<defs>
 								<linearGradient id="my_gradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -306,6 +327,11 @@ export const SwapCard = ({
 					</>
 				)}
 			</Button>
+			<Snackbar open={openSnack} autoHideDuration={6000}>
+				<Alert severity="success" variant="filled" sx={{ width: '100%' }}>
+					Tx sent successfully
+				</Alert>
+			</Snackbar>
 		</Card>
 	);
 };

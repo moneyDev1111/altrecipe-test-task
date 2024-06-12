@@ -57,3 +57,6 @@ div.card-swap {
 		color: rgb(224, 224, 224);
 	}
 }
+.amount-out__usd {
+	color: rgb(24, 173, 24);
+}

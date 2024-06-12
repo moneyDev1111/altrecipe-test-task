@@ -8,28 +8,52 @@ body {
 
 button.btn-wallet__connect {
 	padding: 0.65em;
-	background-color: rgb(30, 19, 40);
+	background-color: rgb(27, 23, 30);
 	color: inherit;
 
 	font-size: 1.1rem;
 	text-transform: none;
 	&:hover {
-		animation: colorChange 1s forwards;
-		background-color: rgb(29, 19, 37);
+		animation: colorChange 3s forwards;
+		background-color: rgb(19, 20, 37);
 	}
 }
 
 @keyframes colorChange {
 	0% {
-		background-color: rgb(29, 19, 37);
+		background-color: rgb(29, 24, 47);
 	}
 	20% {
-		background-color: rgb(58, 39, 75);
+		background-color: rgb(32, 33, 62);
 	}
 	100% {
-		background-color: rgb(37, 24, 47);
+		background-color: rgb(16, 12, 24);
 	}
 }
 div.card-swap {
 	box-shadow: hsl(0deg 0% 95.12% / 14%) 3px 3px;
+}
+.swap-icon {
+	background-color: #1e1e1e;
+	border-radius: 50%;
+	scale: 1.8;
+	shape-rendering: geometricPrecision;
+	position: absolute;
+	top: 30%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 3;
+	transition: fill 0.5s ease;
+	color: rgb(61, 59, 59);
+	&:hover {
+		cursor: pointer;
+		fill: rgb(224, 224, 224);
+	}
+}
+.sign {
+	color: #514f53;
+	transition: color 0.3s ease-in;
+	&:hover {
+		color: rgb(224, 224, 224);
+	}
 }

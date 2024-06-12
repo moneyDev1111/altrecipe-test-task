@@ -1,11 +1,12 @@
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 
-import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
+import { createWeb3Modal, defaultConfig, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
 import { Button } from '@mui/material';
 
 import { useWeb3Modal } from '@web3modal/ethers/react';
 import { SwapCard } from './components/SwapCard';
+import { useState } from 'react';
 // 1. Get projectId
 const projectId = '6bb7a5f6-9b96-48f9-aef8-d24a655de07d';
 
@@ -17,7 +18,13 @@ const mainnet = {
 	explorerUrl: 'https://etherscan.io',
 	rpcUrl: 'https://cloudflare-eth.com',
 };
-
+const sepolia = {
+	chainId: 11155111,
+	name: 'Sepolia',
+	currency: 'ETH',
+	explorerUrl: 'https://sepolia.etherscan.io/',
+	rpcUrl: 'https://1rpc.io/sepolia',
+};
 // 3. Create a metadata object
 const metadata = {
 	name: 'My Website',
@@ -35,8 +42,6 @@ const ethersConfig = defaultConfig({
 	enableEIP6963: true, // true by default
 	enableInjected: true, // true by default
 	enableCoinbase: true, // true by default
-	rpcUrl: '...', // used for the Coinbase SDK
-	defaultChainId: 1, // used for the Coinbase SDK
 });
 
 // 5. Create a Web3Modal instance
@@ -47,29 +52,51 @@ createWeb3Modal({
 	// 	'--w3m-border-radius-master': '1px',
 	// },
 	ethersConfig,
-	chains: [mainnet],
+	chains: [sepolia],
 	projectId,
 	enableAnalytics: true, // Optional - defaults to your Cloud configuration
 });
 
+const shortenAddress = (address: string) => {
+	const firstPart = address.slice(0, 5);
+	const secondPart = address.slice(35, -1);
+	return firstPart + '...' + secondPart;
+};
 export default function App() {
-	// const { open } = useWeb3Modal();
+	const { address, chainId, isConnected } = useWeb3ModalAccount();
+	const { walletProvider } = useWeb3ModalProvider();
+	const { open } = useWeb3Modal();
+	const [tokenBalance, setTokenBalance] = useState('');
+	const [tokenFrom, setTokenFrom] = useState('ETH');
+	const [tokenTo, setTokenTo] = useState('WETH');
+	console.log(tokenFrom);
+	console.log(tokenTo);
 
 	return (
 		<Container sx={{ minHeight: '100vh', width: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 			<Box>
 				<Box display="flex" my={1} justifyContent="flex-end">
-					{/* <Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
-						Connect Wallet
-					</Button> */}
-					<w3m-button />
+					{isConnected && <Box></Box>}
+					<Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
+						{isConnected && address ? shortenAddress(address) : 'Connect Wallet'}
+					</Button>
 				</Box>
 			</Box>
 			<Box minHeight="90%" sx={{ overflow: 'visible' }}>
-				<SwapCard />
+				<SwapCard
+					isConnected={isConnected}
+					walletProvider={walletProvider}
+					accountAddress={address}
+					tokenBalance={tokenBalance}
+					setTokenBalance={setTokenBalance}
+					tokenFrom={tokenFrom}
+					setTokenFrom={setTokenFrom}
+					tokenTo={tokenTo}
+					setTokenTo={setTokenTo}
+				/>
 			</Box>
-			<Box textAlign={'center'} fontSize={12} color={'#514F53'}>
-				{`DegenDex ${new Date().getFullYear()}`}
+			<Box className="sign" textAlign={'center'} fontSize={12}>
+				{`altRecipe Test Task Eugene1111 \u00A9 ${new Date().getFullYear()}`}
 			</Box>
 		</Container>
 	);

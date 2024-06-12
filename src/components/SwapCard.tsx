@@ -1,10 +1,10 @@
 import { Alert, Box, Button, Card, CircularProgress, FormControl, InputLabel, MenuItem, Select, Slider, TextField } from '@mui/material';
-import { BrowserProvider, Contract, Eip1193Provider, formatUnits } from 'ethers';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { BaseContract, BrowserProvider, Contract, Eip1193Provider, formatUnits, parseUnits } from 'ethers';
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import SwapVerticalCircleOutlinedIcon from '@mui/icons-material/SwapVerticalCircleOutlined';
-import Snackbar from '@mui/material/Snackbar';
+import { inUSD } from '../data/helpers';
 
 export const SwapCard = ({
 	isConnected,
@@ -27,19 +27,16 @@ export const SwapCard = ({
 	tokenTo: string;
 	setTokenTo: Dispatch<SetStateAction<string>>;
 }) => {
+	const debounceRef = useRef<NodeJS.Timeout>();
+
 	const [isLoading, setIsLoading] = useState(false);
 	const [openSnack, setOpenSnack] = useState(false);
 
 	const [amountFrom, setAmountFrom] = useState('');
+	const [amountTo, setAmountTo] = useState('');
 	// const { enqueueSnackbar } = useSnackbar();
-
-	const mappedTokensFrom = tokens
-		.filter((token) => token.symbol !== tokenTo)
-		.map((token, index) => (
-			<MenuItem key={index} value={token.symbol}>
-				{token.symbol}
-			</MenuItem>
-		));
+	const [feeUSD, setFeeUSD] = useState('');
+	const [feeAmountOutUSD, setAmountOutUSD] = useState('');
 
 	const sendTx = async () => {
 		setIsLoading(true);
@@ -47,37 +44,74 @@ export const SwapCard = ({
 		try {
 			if (tokenFrom === 'ETH' && tokenTo === 'WETH' && walletProvider) {
 				const provider = new BrowserProvider(walletProvider!);
+				const signer = await provider.getSigner();
 				const tokenAddress = tokens.find((token) => token.symbol === tokenFrom)?.address;
 
 				const WETH_Contract = new Contract(tokenAddress!, WETH_ABI, provider);
 
-				const res = await WETH_Contract.deposit({ value: amountFrom, from: await provider.getSigner() });
+				// //@ts-ignore
+				// const res = await WETH_Contract.connect(signer).withdraw({ value: amountFrom });
 
-				const txRes = await res.wait();
+				// const txRes = await res.wait();
 
-				console.log(txRes);
+				// console.log(txRes);
 
-				if (txRes.status === '1') {
-					setIsLoading(false);
+				// if (txRes.status === '1') {
+				// 	setIsLoading(false);
 
-					setOpenSnack(true);
-				}
+				// 	setOpenSnack(true);
+				// }
+				await new Promise((r) => setTimeout(r, 5000));
+				setIsLoading(false);
 			} else {
 				const provider = new BrowserProvider(walletProvider!);
+				const signer = await provider.getSigner();
 				const tokenAddress = tokens.find((token) => token.symbol === tokenFrom)?.address;
 
 				const WETH_Contract = new Contract(tokenAddress!, WETH_ABI, provider);
 
-				const res = await WETH_Contract.withdraw({ value: amountFrom, from: await provider.getSigner() });
+				// //@ts-ignore
+				// const res = await WETH_Contract.connect(signer).withdraw({ value: amountFrom });
 
-				const txRes = await res.wait();
+				// const txRes = await res.wait();
 
-				console.log(txRes);
+				// console.log(txRes);
 
-				if (txRes.status === '1') {
-					setIsLoading(false);
+				// if (txRes.status === '1') {
+				// 	setIsLoading(false);
 
-					setOpenSnack(true);
+				// 	setOpenSnack(true);
+				// }
+				await new Promise((r) => setTimeout(r, 5000));
+				setIsLoading(false);
+			}
+		} catch (error) {
+			setIsLoading(false);
+
+			console.log(error);
+		}
+	};
+
+	const estimateFees = async () => {
+		try {
+			if (walletProvider) {
+				const provider = new BrowserProvider(walletProvider!);
+				const signer = await provider.getSigner();
+
+				const tokenParams = tokens.find((token) => token.symbol === 'WETH');
+				if (tokenParams) {
+					const { address, decimals } = tokenParams;
+					const WETH_Contract = new Contract(address, WETH_ABI, signer);
+
+					const tx = {
+						to: WETH_Contract.target,
+						data: WETH_Contract.interface.encodeFunctionData(tokenFrom === 'ETH' && tokenTo === 'WETH' ? 'deposit' : 'withdraw'),
+					};
+
+					const fee = await provider.estimateGas(tx);
+					console.log('FEE', fee);
+					const amountOut = parseUnits(amountFrom, decimals) - fee;
+					return { fee, amountOut, decimals };
 				}
 			}
 		} catch (error) {
@@ -86,6 +120,7 @@ export const SwapCard = ({
 			console.log(error);
 		}
 	};
+
 	const getBalance = async () => {
 		try {
 			const provider = new BrowserProvider(walletProvider!);
@@ -108,6 +143,34 @@ export const SwapCard = ({
 	useEffect(() => {
 		isConnected && getBalance();
 	}, [isConnected, tokenFrom]);
+
+	useEffect(() => {
+		debounceRef.current && clearTimeout(debounceRef.current);
+
+		if (amountFrom) {
+			debounceRef.current = setTimeout(async () => {
+				const res = await estimateFees();
+				if (res) {
+					const { fee, amountOut, decimals } = res;
+					setAmountTo(formatUnits(amountOut, decimals));
+
+					setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
+					await new Promise((r) => setTimeout(r, 1000));
+					setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '');
+				}
+			}, 300);
+		}
+
+		return () => clearTimeout(debounceRef.current);
+	}, [amountFrom]);
+
+	const mappedTokensFrom = tokens
+		.filter((token) => token.symbol !== tokenTo)
+		.map((token, index) => (
+			<MenuItem key={index} value={token.symbol}>
+				{token.symbol}
+			</MenuItem>
+		));
 
 	const mappedTokensTo = tokens
 		.filter((token) => token.symbol !== tokenFrom)
@@ -157,6 +220,7 @@ export const SwapCard = ({
 				onClick={(e) => {
 					setTokenTo(tokenFrom);
 					setTokenFrom(tokenTo);
+					setAmountFrom(amountTo);
 				}}
 			>
 				<SwapVerticalCircleOutlinedIcon className="swap-icon" />
@@ -173,9 +237,15 @@ export const SwapCard = ({
 					id="outlined-to"
 					label="Amount To"
 					type="number"
+					value={amountTo !== '0' ? amountTo : ''}
+					onChange={(e) => {
+						if (e.target.value > tokenBalance) setAmountTo(tokenBalance);
+						else setAmountTo(e.target.value);
+					}}
 				/>
 				<FormControl sx={{ width: '10vw' }}>
 					<InputLabel id="to-select-label">To</InputLabel>
+
 					<Select labelId="to-select-label" value={tokenTo} label="To" onChange={(e) => setTokenTo(e.target.value)}>
 						{mappedTokensTo}
 					</Select>
@@ -208,8 +278,9 @@ export const SwapCard = ({
 			</Box>
 
 			<Button
+				disabled={isLoading}
 				variant="outlined"
-				endIcon={<AccountBalanceWalletIcon />}
+				endIcon={!isLoading ? <AccountBalanceWalletIcon /> : null}
 				sx={{ fontSize: '1.25rem', width: '75%', margin: '1em auto 0 auto' }}
 				onClick={(e) => sendTx()}
 			>

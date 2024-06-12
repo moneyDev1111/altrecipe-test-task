@@ -23,7 +23,7 @@ const sepolia = {
 	name: 'Sepolia',
 	currency: 'ETH',
 	explorerUrl: 'https://sepolia.etherscan.io/',
-	rpcUrl: 'https://1rpc.io/sepolia',
+	rpcUrl: 'https://rpc.ankr.com/eth_sepolia',
 };
 // 3. Create a metadata object
 const metadata = {

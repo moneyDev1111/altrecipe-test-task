@@ -60,3 +60,6 @@ div.card-swap {
 .amount-out__usd {
 	color: rgb(24, 173, 24);
 }
+.MuiAlert-icon {
+	margin-top: 0.15em;
+}

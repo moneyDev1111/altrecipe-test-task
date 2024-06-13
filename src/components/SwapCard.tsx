@@ -6,6 +6,7 @@ import {
 	CircularProgress,
 	FormControl,
 	InputLabel,
+	Link,
 	MenuItem,
 	Select,
 	Slider,
@@ -13,7 +14,7 @@ import {
 	TextField,
 	Tooltip,
 } from '@mui/material';
-import { BrowserProvider, Contract, Eip1193Provider, formatEther, formatUnits, parseUnits } from 'ethers';
+import { BrowserProvider, Contract, Eip1193Provider, TransactionReceipt, formatEther, formatUnits, parseUnits } from 'ethers';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
@@ -52,6 +53,7 @@ export const SwapCard = ({
 	const [feeUSD, setFeeUSD] = useState('');
 	const [AmountOutUSD, setAmountOutUSD] = useState('');
 
+	const [txHashLink, setTxHashLink] = useState('');
 	const sendTx = async () => {
 		setIsLoading(true);
 
@@ -66,15 +68,15 @@ export const SwapCard = ({
 				//@ts-ignore
 				const res = await WETH_Contract.connect(signer).deposit({ value: parseUnits(amountFrom, 18) });
 
-				const txRes = await res.wait();
+				const txRes: TransactionReceipt = await res.wait();
 
 				console.log(txRes);
 
 				if (txRes.status === 1) {
 					setIsLoading(false);
+					setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`);
 
 					setOpenSnack(true);
-					setOpenSnack(false);
 				}
 			} else {
 				//@ts-ignore
@@ -86,9 +88,9 @@ export const SwapCard = ({
 
 				if (txRes.status === 1) {
 					setIsLoading(false);
+					setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`);
 
 					setOpenSnack(true);
-					setOpenSnack(false);
 				}
 			}
 		} catch (error) {
@@ -111,7 +113,10 @@ export const SwapCard = ({
 
 					const tx = {
 						to: WETH_Contract.target,
-						data: WETH_Contract.interface.encodeFunctionData(tokenFrom === 'ETH' && tokenTo === 'WETH' ? 'deposit' : 'withdraw'),
+						data:
+							tokenFrom === 'ETH' && tokenTo === 'WETH'
+								? WETH_Contract.interface.encodeFunctionData('deposit')
+								: WETH_Contract.interface.encodeFunctionData('withdraw', [parseUnits(amountFrom, decimals)]),
 					};
 
 					const fee = await provider.estimateGas(tx);
@@ -146,6 +151,15 @@ export const SwapCard = ({
 		} catch (error: any) {
 			console.log(error);
 		}
+	};
+	console.log(txHashLink);
+
+	const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
+		if (reason === 'clickaway') {
+			return;
+		}
+
+		setOpenSnack(false);
 	};
 
 	useEffect(() => {
@@ -214,7 +228,7 @@ export const SwapCard = ({
 					id="outlined-from"
 					label="Amount From"
 					type="number"
-					value={amountFrom !== '0' ? amountFrom : ''}
+					value={amountFrom !== '0' && amountFrom ? amountFrom : ''}
 					onChange={(e) => {
 						if (e.target.value > tokenBalance) setAmountFrom(tokenBalance);
 						else setAmountFrom(e.target.value);
@@ -248,7 +262,7 @@ export const SwapCard = ({
 					id="outlined-to"
 					label="Amount To"
 					type="number"
-					value={amountTo !== '0' ? amountTo : ''}
+					value={amountTo !== '0' && amountFrom ? amountTo : ''}
 					onChange={(e) => {
 						if (e.target.value > tokenBalance) setAmountTo(tokenBalance);
 						else setAmountTo(e.target.value);
@@ -263,8 +277,8 @@ export const SwapCard = ({
 				</FormControl>
 			</Box>
 
-			{amountFrom !== '0' && (
-				<Tooltip title="No rate limit ( 1inch price aggregator smart contract )" placement="top">
+			{amountFrom !== '0' && amountFrom && (
+				<Tooltip title="No rate limit, fee is not shown cause it's always < $0.00" placement="top">
 					<Box component={'p'} padding={0} margin={0} fontSize={'0.75rem'} textAlign={'center'} paddingTop={'0.3em'}>
 						The receive tokens amount is ~ <span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
 					</Box>
@@ -274,6 +288,7 @@ export const SwapCard = ({
 			<Box display="flex" justifyContent="center" alignItems={'center'} gap={'1em'} mt={'1em'}>
 				<Box component={'span'} width={'70%'}>
 					<Slider
+						disabled={!isConnected}
 						onChange={(e, value) => {
 							setAmountFrom(String(value));
 						}}
@@ -287,6 +302,7 @@ export const SwapCard = ({
 					/>
 				</Box>
 				<Button
+					disabled={!isConnected}
 					onClick={() => {
 						setAmountFrom(tokenBalance);
 					}}
@@ -296,7 +312,7 @@ export const SwapCard = ({
 				</Button>
 			</Box>
 			<Button
-				disabled={isLoading || amountFrom === '0'}
+				disabled={isLoading || amountFrom === '0' || !amountFrom}
 				variant="outlined"
 				endIcon={!isLoading ? <AccountBalanceWalletIcon /> : null}
 				sx={{ fontSize: '1.25rem', width: '75%', margin: '1em auto 0 auto' }}
@@ -327,9 +343,17 @@ export const SwapCard = ({
 					</>
 				)}
 			</Button>
-			<Snackbar open={openSnack} autoHideDuration={6000}>
-				<Alert severity="success" variant="filled" sx={{ width: '100%' }}>
+			<Snackbar open={openSnack} autoHideDuration={6000} onClose={handleClose}>
+				<Alert
+					severity="success"
+					variant="filled"
+					sx={{ width: '100%', fontSize: '1.2rem', color: 'rgb(224, 224, 224)', display: 'flex', alignContent: 'center' }}
+				>
 					Tx sent successfully
+					<br />
+					<Link href={txHashLink} target={'_blank'}>
+						Open in explorer
+					</Link>
 				</Alert>
 			</Snackbar>
 		</Card>

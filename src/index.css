@@ -2,13 +2,13 @@ body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 
-	background: linear-gradient(8deg, rgba(20, 14, 35, 0.702) 0%, rgb(9, 3, 12) 100%) fixed,
-		radial-gradient(circle, rgba(185, 182, 189, 0.75) 30%, rgb(36, 29, 40) 100%) fixed;
+	background: linear-gradient(8deg, rgba(38, 36, 44, 0.702) 0%, rgb(10, 13, 14) 100%) fixed,
+		radial-gradient(circle, rgba(185, 182, 189, 0.55) 80%, rgb(36, 29, 40) 100%) fixed;
 }
 
 button.btn-wallet__connect {
 	padding: 0.65em;
-	background-color: rgb(27, 23, 30);
+	background-color: rgb(35, 30, 39);
 	color: inherit;
 
 	font-size: 1.1rem;
@@ -39,7 +39,7 @@ div.card-swap {
 	scale: 1.8;
 	shape-rendering: geometricPrecision;
 	position: absolute;
-	top: 30%;
+	top: 28%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	z-index: 3;
@@ -62,4 +62,7 @@ div.card-swap {
 }
 .MuiAlert-icon {
 	margin-top: 0.15em;
+}
+.balances {
+	color: rgb(198, 198, 198);
 }

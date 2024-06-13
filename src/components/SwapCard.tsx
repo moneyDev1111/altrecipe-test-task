@@ -27,6 +27,8 @@ export const SwapCard = ({
 	accountAddress,
 	tokenBalance,
 	setTokenBalance,
+	setEthBalance,
+	setWethBalance,
 	tokenFrom,
 	setTokenFrom,
 	tokenTo,
@@ -37,6 +39,8 @@ export const SwapCard = ({
 	accountAddress: string | undefined;
 	tokenBalance: string;
 	setTokenBalance: Dispatch<SetStateAction<string>>;
+	setEthBalance: Dispatch<SetStateAction<string>>;
+	setWethBalance: Dispatch<SetStateAction<string>>;
 	tokenFrom: string;
 	setTokenFrom: Dispatch<SetStateAction<string>>;
 	tokenTo: string;
@@ -54,6 +58,7 @@ export const SwapCard = ({
 	const [AmountOutUSD, setAmountOutUSD] = useState('');
 
 	const [txHashLink, setTxHashLink] = useState('');
+
 	const sendTx = async () => {
 		setIsLoading(true);
 
@@ -109,7 +114,7 @@ export const SwapCard = ({
 				const tokenParams = tokens.find((token) => token.symbol === 'WETH');
 				if (tokenParams) {
 					const { address, decimals } = tokenParams;
-					const WETH_Contract = new Contract(address, WETH_ABI, signer);
+					const WETH_Contract = new Contract(address, WETH_ABI);
 
 					const tx = {
 						to: WETH_Contract.target,
@@ -117,9 +122,12 @@ export const SwapCard = ({
 							tokenFrom === 'ETH' && tokenTo === 'WETH'
 								? WETH_Contract.interface.encodeFunctionData('deposit')
 								: WETH_Contract.interface.encodeFunctionData('withdraw', [parseUnits(amountFrom, decimals)]),
+						from: signer.address,
 					};
+					console.log('HENLO!');
 
 					const fee = await provider.estimateGas(tx);
+					console.log('HENLO 2!');
 
 					console.log('FEE', fee);
 
@@ -139,7 +147,9 @@ export const SwapCard = ({
 			const provider = new BrowserProvider(walletProvider!);
 
 			if (tokenFrom === 'ETH') {
-				setTokenBalance(formatUnits(await provider.getBalance(accountAddress!), 18));
+				const ethBalance = formatUnits(await provider.getBalance(accountAddress!), 18);
+				setTokenBalance(ethBalance);
+				setEthBalance(ethBalance);
 			} else {
 				const tokenAddress = tokens.find((token) => token.symbol === tokenFrom)?.address;
 
@@ -152,7 +162,20 @@ export const SwapCard = ({
 			console.log(error);
 		}
 	};
-	console.log(txHashLink);
+	const getWethBalance = async () => {
+		try {
+			const provider = new BrowserProvider(walletProvider!);
+
+			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address;
+
+			if (tokenAddress) {
+				const tokenContract = new Contract(tokenAddress, WETH_ABI, provider);
+				setWethBalance(formatUnits(await tokenContract.balanceOf(accountAddress)));
+			}
+		} catch (error: any) {
+			console.log(error);
+		}
+	};
 
 	const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
 		if (reason === 'clickaway') {
@@ -164,7 +187,8 @@ export const SwapCard = ({
 
 	useEffect(() => {
 		isConnected && getBalance();
-	}, [isConnected, tokenFrom]);
+		isConnected && getWethBalance();
+	}, [isConnected, tokenFrom, txHashLink]);
 
 	useEffect(() => {
 		debounceRef.current && clearTimeout(debounceRef.current);
@@ -175,6 +199,7 @@ export const SwapCard = ({
 				if (res) {
 					const { fee, amountOut, decimals } = res;
 					setAmountTo(formatUnits(amountOut, decimals));
+					console.log('HERE');
 
 					setAmountOutUSD(await checkPriceImpact(formatEther(amountOut - fee)));
 					// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');

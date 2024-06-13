@@ -67,16 +67,21 @@ export default function App() {
 	const { walletProvider } = useWeb3ModalProvider();
 	const { open } = useWeb3Modal();
 	const [tokenBalance, setTokenBalance] = useState('');
+	const [ethBalance, setEthBalance] = useState('');
+	const [wethBalance, setWethBalance] = useState('');
 	const [tokenFrom, setTokenFrom] = useState('ETH');
 	const [tokenTo, setTokenTo] = useState('WETH');
-	console.log(tokenFrom);
-	console.log(tokenTo);
 
 	return (
 		<Container sx={{ minHeight: '100vh', width: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 			<Box>
-				<Box display="flex" my={1} justifyContent="flex-end">
-					{isConnected && <Box></Box>}
+				<Box display="flex" my={1} justifyContent="flex-end" alignItems={'center'} fontSize={'0.9rem'}>
+					{isConnected && tokenBalance && (
+						<Box display={'flex'} flexDirection={'column'} marginRight={'1.3em'} className="balances">
+							<Box>ETH: &nbsp;{ethBalance.slice(0, 5)}</Box>
+							<Box>WETH: {wethBalance.slice(0, 5)}</Box>
+						</Box>
+					)}
 					<Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
 						{isConnected && address ? shortenAddress(address) : 'Connect Wallet'}
 					</Button>
@@ -89,6 +94,8 @@ export default function App() {
 					accountAddress={address}
 					tokenBalance={tokenBalance}
 					setTokenBalance={setTokenBalance}
+					setEthBalance={setEthBalance}
+					setWethBalance={setWethBalance}
 					tokenFrom={tokenFrom}
 					setTokenFrom={setTokenFrom}
 					tokenTo={tokenTo}

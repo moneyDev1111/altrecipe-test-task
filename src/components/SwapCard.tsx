@@ -366,7 +366,7 @@ export const SwapCard = ({
 				</Button>
 			</Box>
 			<Button
-				disabled={isLoading || amountFrom === '0' || !amountFrom || /\-/.test(amountTo) || /e\-\d*/.test(amountFrom)}
+				disabled={isLoading || amountFrom === '0' || !amountFrom || /\-/.test(amountTo) || /e\-\d*/.test(amountFrom) || /\-/.test(AmountOutUSD)}
 				variant="outlined"
 				endIcon={!isLoading ? <AccountBalanceWalletIcon /> : null}
 				sx={{ fontSize: '1.25rem', width: '75%', margin: '1em auto 0 auto' }}

@@ -71,7 +71,7 @@ export const SwapCard = ({
 
 			if (tokenFrom === 'ETH' && tokenTo === 'WETH' && walletProvider) {
 				//@ts-ignore
-				const res = await WETH_Contract.connect(signer).deposit({ value: parseUnits(amountFrom, 18) });
+				const res = await WETH_Contract.connect(signer).deposit({ value: parseUnits(amountTo, 18) });
 
 				const txRes: TransactionReceipt = await res.wait();
 
@@ -161,12 +161,21 @@ export const SwapCard = ({
 				let gasFetched = false;
 				let gasPrice: bigint = BigInt(0);
 
-				while (gasFetched) {
+				while (!gasFetched) {
 					try {
-						const { gasPrice } = await provider.getFeeData();
-						gasPrice && (gasFetched = true);
+						const res = await provider.getBlock('latest');
+						const res2 = await provider.getFeeData();
+						if (res?.baseFeePerGas && res2?.maxPriorityFeePerGas) {
+							console.log(res.baseFeePerGas);
+							console.log(res2.maxPriorityFeePerGas);
+
+							const fees = res.baseFeePerGas + res2.maxPriorityFeePerGas;
+							gasPrice = fees;
+							gasFetched = true;
+						}
 					} catch (error) {
 						console.log(error);
+						await new Promise((r) => setTimeout(r, 1000));
 					}
 				}
 
@@ -183,10 +192,10 @@ export const SwapCard = ({
 								: WETH_Contract.interface.encodeFunctionData('withdraw', [parseUnits(amountFrom, decimals)]),
 						from: signer.address,
 					};
-					console.log('HENLO!');
+
+					console.log(await provider.estimateGas(tx));
 
 					const fee = (await provider.estimateGas(tx)) * gasPrice;
-					console.log('FEE', fee);
 
 					const amountOut = parseUnits(amountFrom, decimals) - fee;
 					return { fee, amountOut, decimals };
@@ -205,13 +214,15 @@ export const SwapCard = ({
 		if (+amountFrom > 0) {
 			debounceRef.current = setTimeout(async () => {
 				const res = await estimateFees();
+
 				if (res) {
 					const { fee, amountOut, decimals } = res;
 					setAmountTo(formatUnits(amountOut, decimals));
-					console.log('HERE');
+					console.log('FEE', formatEther(fee));
 
-					setFeeUSD(await checkPriceImpact(formatEther(fee)));
-					setAmountOutUSD(await checkPriceImpact(formatEther(amountOut - fee)));
+					checkPriceImpact(formatEther(fee)).then((res) => setFeeUSD(res));
+					checkPriceImpact(formatEther(amountOut - fee)).then((res) => setAmountOutUSD(res));
+
 					// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
 					// await new Promise((r) => setTimeout(r, 1000));
 					// setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '');
@@ -314,11 +325,11 @@ export const SwapCard = ({
 
 			{amountFrom !== '0' && amountFrom && (
 				<Tooltip title="No rate limit" placement="top">
-					<Box component={'p'} padding={0} margin={0} fontSize={'0.75rem'} textAlign={'center'} paddingTop={'0.3em'}>
-						<p>
+					<Box component={'section'} padding={0} margin={0} fontSize={'0.75rem'} textAlign={'center'} paddingTop={'0.3em'}>
+						<p style={{ margin: 0, padding: 0 }}>
 							The receive tokens amount is ~ <span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
 						</p>
-						<p>
+						<p style={{ margin: 0, padding: 0 }}>
 							Fee is ~ <span className="amount-out__usd">${(+feeUSD).toFixed(2)}</span>
 						</p>
 					</Box>

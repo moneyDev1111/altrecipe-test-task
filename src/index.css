@@ -39,7 +39,7 @@ div.card-swap {
 	scale: 1.8;
 	shape-rendering: geometricPrecision;
 	position: absolute;
-	top: 26.5%;
+	top: 26.33%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	z-index: 3;

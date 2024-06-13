@@ -207,11 +207,13 @@ export const SwapCard = ({
 			console.log(error);
 		}
 	};
+	console.log('AMOUNT FROM', amountFrom);
+	console.log('AMOUNT TO', amountTo);
 
 	useEffect(() => {
 		debounceRef.current && clearTimeout(debounceRef.current);
 
-		if (+amountFrom > 0) {
+		if (+amountFrom > 0 && !/e\-\d*/.test(amountFrom)) {
 			debounceRef.current = setTimeout(async () => {
 				const res = await estimateFees();
 
@@ -257,74 +259,73 @@ export const SwapCard = ({
 				padding: '1em',
 				display: 'flex',
 				flexDirection: 'column',
-				width: '40%',
+				width: '44%',
 				margin: '0 auto',
 				gap: '1.2vh',
 				borderRadius: '10px',
-				position: 'relative',
 			}}
 			className="card-swap"
 		>
-			<Box display="flex" flexDirection="row" component="form" noValidate autoComplete="off">
-				<TextField
-					InputProps={{
-						inputProps: { min: 0, max: tokenBalance, step: '0.0001' },
+			<Box style={{ position: 'relative', display: 'flex', gap: '1em', flexDirection: 'column' }}>
+				<Box display="flex" flexDirection="row" component="form" noValidate autoComplete="off">
+					<TextField
+						InputProps={{
+							inputProps: { min: 0, max: tokenBalance, step: '0.0001' },
+						}}
+						fullWidth
+						id="outlined-from"
+						label="Amount From"
+						type="number"
+						value={amountFrom !== '0' && amountFrom ? amountFrom : ''}
+						onChange={(e) => {
+							if (e.target.value > tokenBalance) setAmountFrom(tokenBalance);
+							else setAmountFrom(e.target.value);
+						}}
+					/>
+					<FormControl sx={{ width: '10vw' }}>
+						<InputLabel id="from-select-label">From</InputLabel>
+						<Select labelId="from-select-label" value={tokenFrom} label="From" onChange={(e) => setTokenFrom(e.target.value)}>
+							{mappedTokensFrom}
+						</Select>
+					</FormControl>
+				</Box>
+				<SwapVerticalCircleOutlinedIcon
+					onClick={(e) => {
+						setTokenTo(tokenFrom);
+						setTokenFrom(tokenTo);
+						setAmountFrom(amountTo);
 					}}
-					fullWidth
-					id="outlined-from"
-					label="Amount From"
-					type="number"
-					value={amountFrom !== '0' && amountFrom ? amountFrom : ''}
-					onChange={(e) => {
-						if (e.target.value > tokenBalance) setAmountFrom(tokenBalance);
-						else setAmountFrom(e.target.value);
-					}}
+					className="swap-icon"
 				/>
-				<FormControl sx={{ width: '10vw' }}>
-					<InputLabel id="from-select-label">From</InputLabel>
-					<Select labelId="from-select-label" value={tokenFrom} label="From" onChange={(e) => setTokenFrom(e.target.value)}>
-						{mappedTokensFrom}
-					</Select>
-				</FormControl>
-			</Box>
-			<span
-				onClick={(e) => {
-					setTokenTo(tokenFrom);
-					setTokenFrom(tokenTo);
-					setAmountFrom(amountTo);
-				}}
-			>
-				<SwapVerticalCircleOutlinedIcon className="swap-icon" />
-			</span>
 
-			<Box display="flex" flexDirection="row" component="form" noValidate autoComplete="off">
-				<TextField
-					InputProps={
-						{
-							// inputProps: { min: 0, max: tokenBalance, step: '0.0001' },
+				<Box display="flex" flexDirection="row" component="form" noValidate autoComplete="off">
+					<TextField
+						InputProps={
+							{
+								// inputProps: { min: 0, max: tokenBalance, step: '0.0001' },
+							}
 						}
-					}
-					fullWidth
-					id="outlined-to"
-					label="Amount To"
-					type="number"
-					value={amountTo !== '0' && amountFrom ? amountTo : ''}
-					onChange={(e) => {
-						if (e.target.value > tokenBalance) setAmountTo(tokenBalance);
-						else setAmountTo(e.target.value);
-					}}
-				/>
-				<FormControl sx={{ width: '10vw' }}>
-					<InputLabel id="to-select-label">To</InputLabel>
+						fullWidth
+						id="outlined-to"
+						label="Amount To"
+						type="number"
+						value={amountTo !== '0' && amountFrom ? amountTo : ''}
+						onChange={(e) => {
+							if (e.target.value > tokenBalance) setAmountTo(tokenBalance);
+							else setAmountTo(e.target.value);
+						}}
+					/>
+					<FormControl sx={{ width: '10vw' }}>
+						<InputLabel id="to-select-label">To</InputLabel>
 
-					<Select labelId="to-select-label" value={tokenTo} label="To" onChange={(e) => setTokenTo(e.target.value)}>
-						{mappedTokensTo}
-					</Select>
-				</FormControl>
+						<Select labelId="to-select-label" value={tokenTo} label="To" onChange={(e) => setTokenTo(e.target.value)}>
+							{mappedTokensTo}
+						</Select>
+					</FormControl>
+				</Box>
 			</Box>
-
-			{amountFrom !== '0' && amountFrom && (
-				<Tooltip title="No rate limit" placement="top">
+			{amountFrom !== '0' && amountFrom && !/e\-\d*/.test(amountFrom) && (
+				<Tooltip title="No rate limits and fee is already deducted" placement="top">
 					<Box component={'section'} padding={0} margin={0} fontSize={'0.75rem'} textAlign={'center'} paddingTop={'0.3em'}>
 						<p style={{ margin: 0, padding: 0 }}>
 							The receive tokens amount is ~ <span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
@@ -350,6 +351,7 @@ export const SwapCard = ({
 						step={0.000000000000000001}
 						value={amountFrom ? parseFloat(amountFrom) : 0}
 						max={tokenBalance ? parseFloat(tokenBalance) : 0}
+						color="primary"
 					/>
 				</Box>
 				<Button
@@ -363,7 +365,7 @@ export const SwapCard = ({
 				</Button>
 			</Box>
 			<Button
-				disabled={isLoading || amountFrom === '0' || !amountFrom}
+				disabled={isLoading || amountFrom === '0' || !amountFrom || /\-/.test(amountTo) || /e\-\d*/.test(amountFrom)}
 				variant="outlined"
 				endIcon={!isLoading ? <AccountBalanceWalletIcon /> : null}
 				sx={{ fontSize: '1.25rem', width: '75%', margin: '1em auto 0 auto' }}
@@ -398,7 +400,7 @@ export const SwapCard = ({
 				<Alert
 					severity="success"
 					variant="filled"
-					sx={{ width: '100%', fontSize: '1.2rem', color: 'rgb(224, 224, 224)', display: 'flex', alignContent: 'center' }}
+					sx={{ width: '100%', fontSize: '1.115rem', color: 'rgb(224, 224, 224)', display: 'flex', alignContent: 'center' }}
 				>
 					Tx sent successfully
 					<br />

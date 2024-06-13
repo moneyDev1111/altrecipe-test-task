@@ -39,7 +39,7 @@ div.card-swap {
 	scale: 1.8;
 	shape-rendering: geometricPrecision;
 	position: absolute;
-	top: 30.3%;
+	top: 57.4%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	z-index: 3;
@@ -65,4 +65,9 @@ div.card-swap {
 }
 .balances {
 	color: rgb(198, 198, 198);
+}
+.logo {
+	filter: invert(0.5), saturate(4), sepia(0.5);
+	/* object-fit: fill; */
+	/* object-position: top; */
 }

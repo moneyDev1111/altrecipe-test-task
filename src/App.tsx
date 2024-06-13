@@ -2,7 +2,7 @@ import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 
 import { createWeb3Modal, defaultConfig, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react';
-import { Button } from '@mui/material';
+import { Button, Tooltip } from '@mui/material';
 
 import { useWeb3Modal } from '@web3modal/ethers/react';
 import { SwapCard } from './components/SwapCard';
@@ -75,16 +75,25 @@ export default function App() {
 	return (
 		<Container sx={{ minHeight: '100vh', width: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 			<Box>
-				<Box display="flex" my={1} justifyContent="flex-end" alignItems={'center'} fontSize={'0.9rem'}>
-					{isConnected && tokenBalance && (
-						<Box display={'flex'} flexDirection={'column'} marginRight={'1.3em'} className="balances">
-							<Box>ETH: &nbsp;{ethBalance.slice(0, 5)}</Box>
-							<Box>WETH: {wethBalance.slice(0, 5)}</Box>
-						</Box>
-					)}
-					<Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
-						{isConnected && address ? shortenAddress(address) : 'Connect Wallet'}
-					</Button>
+				<Box display="flex" my={1} justifyContent="space-between" alignItems={'center'} fontSize={'0.9rem'} marginTop={'0.7em'}>
+					<Box>
+						<a href="https://altrecipe.com/" target="_blank" rel="noopener noreferrer">
+							<Tooltip title="Go to the company site">
+								<img src={`${process.env.PUBLIC_URL}/logo.svg`} className="logo"></img>
+							</Tooltip>
+						</a>
+					</Box>
+					<Box display={'flex'} alignItems={'center'}>
+						{isConnected && tokenBalance && (
+							<Box display={'flex'} flexDirection={'column'} marginRight={'1.3em'} className="balances">
+								<Box>ETH: &nbsp;{ethBalance.slice(0, 5)}</Box>
+								<Box>WETH: {wethBalance.slice(0, 5)}</Box>
+							</Box>
+						)}
+						<Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
+							{isConnected && address ? shortenAddress(address) : 'Connect Wallet'}
+						</Button>
+					</Box>
 				</Box>
 			</Box>
 			<Box minHeight="90%" sx={{ overflow: 'visible' }}>

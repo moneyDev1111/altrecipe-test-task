@@ -74,7 +74,6 @@ export default function App() {
 
 	return (
 		<Container sx={{ minHeight: '100vh', width: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-			FIX THE ESTIMATE FEE!!!! YOU NEED TO gasRPICE * amount returned in gas units
 			<Box>
 				<Box display="flex" my={1} justifyContent="flex-end" alignItems={'center'} fontSize={'0.9rem'}>
 					{isConnected && tokenBalance && (

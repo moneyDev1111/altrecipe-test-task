@@ -105,43 +105,6 @@ export const SwapCard = ({
 		}
 	};
 
-	const estimateFees = async () => {
-		try {
-			if (walletProvider) {
-				const provider = new BrowserProvider(walletProvider!);
-				const signer = await provider.getSigner();
-
-				const tokenParams = tokens.find((token) => token.symbol === 'WETH');
-				if (tokenParams) {
-					const { address, decimals } = tokenParams;
-					const WETH_Contract = new Contract(address, WETH_ABI);
-
-					const tx = {
-						to: WETH_Contract.target,
-						data:
-							tokenFrom === 'ETH' && tokenTo === 'WETH'
-								? WETH_Contract.interface.encodeFunctionData('deposit')
-								: WETH_Contract.interface.encodeFunctionData('withdraw', [parseUnits(amountFrom, decimals)]),
-						from: signer.address,
-					};
-					console.log('HENLO!');
-
-					const fee = await provider.estimateGas(tx);
-					console.log('HENLO 2!');
-
-					console.log('FEE', fee);
-
-					const amountOut = parseUnits(amountFrom, decimals) - fee;
-					return { fee, amountOut, decimals };
-				}
-			}
-		} catch (error) {
-			setIsLoading(false);
-
-			console.log(error);
-		}
-	};
-
 	const getBalance = async () => {
 		try {
 			const provider = new BrowserProvider(walletProvider!);
@@ -190,6 +153,52 @@ export const SwapCard = ({
 		isConnected && getWethBalance();
 	}, [isConnected, tokenFrom, txHashLink]);
 
+	const estimateFees = async () => {
+		try {
+			if (walletProvider) {
+				const provider = new BrowserProvider(walletProvider!);
+				const signer = await provider.getSigner();
+				let gasFetched = false;
+				let gasPrice: bigint = BigInt(0);
+
+				while (gasFetched) {
+					try {
+						const { gasPrice } = await provider.getFeeData();
+						gasPrice && (gasFetched = true);
+					} catch (error) {
+						console.log(error);
+					}
+				}
+
+				const tokenParams = tokens.find((token) => token.symbol === 'WETH');
+				if (tokenParams) {
+					const { address, decimals } = tokenParams;
+					const WETH_Contract = new Contract(address, WETH_ABI);
+
+					const tx = {
+						to: WETH_Contract.target,
+						data:
+							tokenFrom === 'ETH' && tokenTo === 'WETH'
+								? WETH_Contract.interface.encodeFunctionData('deposit')
+								: WETH_Contract.interface.encodeFunctionData('withdraw', [parseUnits(amountFrom, decimals)]),
+						from: signer.address,
+					};
+					console.log('HENLO!');
+
+					const fee = (await provider.estimateGas(tx)) * gasPrice;
+					console.log('FEE', fee);
+
+					const amountOut = parseUnits(amountFrom, decimals) - fee;
+					return { fee, amountOut, decimals };
+				}
+			}
+		} catch (error) {
+			setIsLoading(false);
+
+			console.log(error);
+		}
+	};
+
 	useEffect(() => {
 		debounceRef.current && clearTimeout(debounceRef.current);
 
@@ -201,6 +210,7 @@ export const SwapCard = ({
 					setAmountTo(formatUnits(amountOut, decimals));
 					console.log('HERE');
 
+					setFeeUSD(await checkPriceImpact(formatEther(fee)));
 					setAmountOutUSD(await checkPriceImpact(formatEther(amountOut - fee)));
 					// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
 					// await new Promise((r) => setTimeout(r, 1000));
@@ -303,9 +313,14 @@ export const SwapCard = ({
 			</Box>
 
 			{amountFrom !== '0' && amountFrom && (
-				<Tooltip title="No rate limit, fee is not shown cause it's always < $0.00" placement="top">
+				<Tooltip title="No rate limit" placement="top">
 					<Box component={'p'} padding={0} margin={0} fontSize={'0.75rem'} textAlign={'center'} paddingTop={'0.3em'}>
-						The receive tokens amount is ~ <span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
+						<p>
+							The receive tokens amount is ~ <span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
+						</p>
+						<p>
+							Fee is ~ <span className="amount-out__usd">${(+feeUSD).toFixed(2)}</span>
+						</p>
 					</Box>
 				</Tooltip>
 			)}

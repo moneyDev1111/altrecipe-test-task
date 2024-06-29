@@ -7,6 +7,8 @@ import { Button, Tooltip } from '@mui/material';
 import { useWeb3Modal } from '@web3modal/ethers/react';
 import { SwapCard } from './components/SwapCard';
 import { useState } from 'react';
+import { Token } from './data/interfaces';
+import { tokens } from './data/evm';
 // 1. Get projectId
 const projectId = '6bb7a5f6-9b96-48f9-aef8-d24a655de07d';
 
@@ -69,8 +71,8 @@ export default function App() {
 	const [tokenBalance, setTokenBalance] = useState('');
 	const [ethBalance, setEthBalance] = useState('');
 	const [wethBalance, setWethBalance] = useState('');
-	const [tokenFrom, setTokenFrom] = useState('ETH');
-	const [tokenTo, setTokenTo] = useState('WETH');
+	const [tokenFrom, setTokenFrom] = useState<Token>(tokens[0]);
+	const [tokenTo, setTokenTo] = useState<Token>(tokens[1]);
 
 	return (
 		<Container sx={{ minHeight: '100vh', width: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -84,12 +86,12 @@ export default function App() {
 						</a>
 					</Box>
 					<Box display={'flex'} alignItems={'center'}>
-						{isConnected && tokenBalance && (
+						{/* {isConnected && tokenBalance && (
 							<Box display={'flex'} flexDirection={'column'} marginRight={'1.3em'} className="balances">
 								<Box>ETH: &nbsp;{ethBalance.slice(0, 5)}</Box>
 								<Box>WETH: {wethBalance.slice(0, 5)}</Box>
 							</Box>
-						)}
+						)} */}
 						<Button variant="contained" onClick={() => open()} className="btn-wallet__connect">
 							{isConnected && address ? shortenAddress(address) : 'Connect Wallet'}
 						</Button>

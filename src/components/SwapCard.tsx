@@ -20,7 +20,8 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import SwapVerticalCircleOutlinedIcon from '@mui/icons-material/SwapVerticalCircleOutlined';
-import { checkPriceImpact, inUSD } from '../data/helpers';
+import { checkPriceImpact, inUSD, priceToUsd } from '../data/helpers';
+import { Token } from '../data/interfaces';
 
 export const SwapCard = ({
 	isConnected,
@@ -42,10 +43,10 @@ export const SwapCard = ({
 	setTokenBalance: Dispatch<SetStateAction<string>>;
 	setEthBalance: Dispatch<SetStateAction<string>>;
 	setWethBalance: Dispatch<SetStateAction<string>>;
-	tokenFrom: string;
-	setTokenFrom: Dispatch<SetStateAction<string>>;
-	tokenTo: string;
-	setTokenTo: Dispatch<SetStateAction<string>>;
+	tokenFrom: Token;
+	setTokenFrom: Dispatch<SetStateAction<Token>>;
+	tokenTo: Token;
+	setTokenTo: Dispatch<SetStateAction<Token>>;
 }) => {
 	const debounceRef = useRef<NodeJS.Timeout>();
 
@@ -70,7 +71,7 @@ export const SwapCard = ({
 			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address;
 			const WETH_Contract = new Contract(tokenAddress!, WETH_ABI);
 
-			if (tokenFrom === 'ETH' && tokenTo === 'WETH' && walletProvider) {
+			if (tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH' && walletProvider) {
 				//@ts-ignore
 				const res = await WETH_Contract.connect(signer).deposit({ value: parseUnits(amountTo, 18) });
 
@@ -110,17 +111,17 @@ export const SwapCard = ({
 		try {
 			const provider = new BrowserProvider(walletProvider!);
 
-			if (tokenFrom === 'ETH') {
+			if (tokenFrom.symbol === 'ETH') {
 				const ethBalance = formatUnits(await provider.getBalance(accountAddress!), 18);
 				setTokenBalance(ethBalance);
 				setEthBalance(ethBalance);
 			} else {
-				const tokenAddress = tokens.find((token) => token.symbol === tokenFrom)?.address;
+				// const tokenAddress = tokens.find((token) => token.symbol === tokenFrom.symbol)?.address;
 
-				if (tokenAddress) {
-					const tokenContract = new Contract(tokenAddress, tokenFrom === 'WETH' ? WETH_ABI : Erc20_ABI, provider);
-					setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)));
-				}
+				// if (tokenAddress) {
+				const tokenContract = new Contract(tokenFrom.address, tokenFrom.symbol === 'WETH' ? WETH_ABI : Erc20_ABI, provider);
+				setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)));
+				// }
 			}
 		} catch (error: any) {
 			console.log(error);
@@ -154,60 +155,56 @@ export const SwapCard = ({
 		isConnected && getWethBalance();
 	}, [isConnected, tokenFrom, txHashLink]);
 
-	const estimateFees = async () => {
-		try {
-			if (walletProvider) {
-				const provider = new BrowserProvider(walletProvider!);
-				const signer = await provider.getSigner();
-				let gasFetched = false;
-				let gasPrice: bigint = BigInt(0);
+	// const estimateFees = async () => {
+	// 	try {
+	// 		if (walletProvider) {
+	// 			const provider = new BrowserProvider(walletProvider!);
+	// 			const signer = await provider.getSigner();
+	// 			let gasFetched = false;
+	// 			let gasPrice: bigint = BigInt(0);
 
-				while (!gasFetched) {
-					try {
-						const res = await provider.getBlock('latest');
-						const res2 = await provider.getFeeData();
-						if (res?.baseFeePerGas && res2?.maxPriorityFeePerGas) {
-							console.log(res.baseFeePerGas);
-							console.log(res2.maxPriorityFeePerGas);
+	// 			while (!gasFetched) {
+	// 				try {
+	// 					const res = await provider.getBlock('latest');
+	// 					const res2 = await provider.getFeeData();
+	// 					if (res?.baseFeePerGas && res2?.maxPriorityFeePerGas) {
+	// 						console.log(res.baseFeePerGas);
+	// 						console.log(res2.maxPriorityFeePerGas);
 
-							const fees = res.baseFeePerGas + res2.maxPriorityFeePerGas;
-							gasPrice = fees;
-							gasFetched = true;
-						}
-					} catch (error) {
-						console.log(error);
-						await new Promise((r) => setTimeout(r, 1000));
-					}
-				}
+	// 						const fees = res.baseFeePerGas + res2.maxPriorityFeePerGas;
+	// 						gasPrice = fees;
+	// 						gasFetched = true;
+	// 					}
+	// 				} catch (error) {
+	// 					console.log(error);
+	// 					await new Promise((r) => setTimeout(r, 1000));
+	// 				}
+	// 			}
 
-				const tokenParams = tokens.find((token) => token.symbol === 'WETH');
-				if (tokenParams) {
-					const { address, decimals } = tokenParams;
-					const WETH_Contract = new Contract(address, WETH_ABI);
+	// 				const tokenContract = new Contract(tokenTo.address,tokenTo.symbol ? WETH_ABI: Erc20_ABI);
 
-					const tx = {
-						to: WETH_Contract.target,
-						data:
-							tokenFrom === 'ETH' && tokenTo === 'WETH'
-								? WETH_Contract.interface.encodeFunctionData('deposit')
-								: WETH_Contract.interface.encodeFunctionData('withdraw', [parseUnits(amountFrom, decimals)]),
-						from: signer.address,
-					};
+	// 				const tx = {
+	// 					to: tokenContract.target,
+	// 					data:
+	// 						tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH'
+	// 							? WETH_Contract.interface.encodeFunctionData('deposit')
+	// 							: WETH_Contract.interface.encodeFunctionData('withdraw', [parseUnits(amountFrom, decimals)]),
+	// 					from: signer.address,
+	// 				};
 
-					console.log(await provider.estimateGas(tx));
+	// 				console.log(await provider.estimateGas(tx));
 
-					const fee = (await provider.estimateGas(tx)) * gasPrice;
+	// 				const fee = (await provider.estimateGas(tx)) * gasPrice;
 
-					const amountOut = parseUnits(amountFrom, decimals) - fee;
-					return { fee, amountOut, decimals };
-				}
-			}
-		} catch (error) {
-			setIsLoading(false);
+	// 				const amountOut = parseUnits(amountFrom, decimals) - fee;
+	// 				return { fee, amountOut, decimals };
+	// 		}
+	// 	} catch (error) {
+	// 		setIsLoading(false);
 
-			console.log(error);
-		}
-	};
+	// 		console.log(error);
+	// 	}
+	// };
 	console.log('AMOUNT FROM', amountFrom);
 	console.log('AMOUNT TO', amountTo);
 
@@ -216,21 +213,25 @@ export const SwapCard = ({
 
 		if (+amountFrom > 0 && !/e\-\d*/.test(amountFrom)) {
 			debounceRef.current = setTimeout(async () => {
-				const res = await estimateFees();
+				// const res = await estimateFees();
 
-				if (res) {
-					const { fee, amountOut, decimals } = res;
-					setAmountTo(formatUnits(amountOut, decimals));
-					console.log('FEE', formatEther(fee));
+				// if (res) {
+				// const { fee, amountOut, decimals } = res;
+				// setAmountTo(formatUnits(amountOut, decimals));
+				// console.log('FEE', formatEther(fee));
 
-					checkPriceImpact(formatEther(fee)).then((res) => setFeeUSD(res));
-					checkPriceImpact(formatEther(amountOut - fee)).then((res) => setAmountOutUSD(res));
+				// checkPriceImpact(tokenFrom, tokenTo, formatEther(fee)).then((res) => setFeeUSD(res));
+				// checkPriceImpact(tokenFrom, tokenTo, formatEther(amountOut - fee)).then((res) => setAmountOutUSD(res));
+				checkPriceImpact(tokenFrom, tokenTo, amountFrom).then(async (res) => {
+					setAmountTo(res);
+					setAmountOutUSD(tokenTo.symbol === 'ETH' ? await priceToUsd(res) : res);
+				});
 
-					// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
-					// await new Promise((r) => setTimeout(r, 1000));
-					// setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '');
-					// console.log('IN USD', (await inUSD(formatUnits(amountOut, decimals))) ?? '');
-				}
+				// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
+				// await new Promise((r) => setTimeout(r, 1000));
+				// setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '');
+				// console.log('IN USD', (await inUSD(formatUnits(amountOut, decimals))) ?? '');
+				// }
 			}, 300);
 		} else {
 			setAmountTo(amountFrom);
@@ -239,7 +240,7 @@ export const SwapCard = ({
 	}, [amountFrom]);
 
 	const mappedTokensFrom = tokens
-		.filter((token) => token.symbol !== tokenTo)
+		.filter((token) => token.symbol !== tokenTo.symbol)
 		.map((token, index) => (
 			<MenuItem key={index} value={token.symbol}>
 				{token.symbol}
@@ -247,7 +248,7 @@ export const SwapCard = ({
 		));
 
 	const mappedTokensTo = tokens
-		.filter((token) => token.symbol !== tokenFrom)
+		.filter((token) => token.symbol !== tokenFrom.symbol)
 		.map((token, index) => (
 			<MenuItem key={index} value={token.symbol}>
 				{token.symbol}
@@ -279,21 +280,27 @@ export const SwapCard = ({
 						type="number"
 						value={amountFrom !== '0' && amountFrom ? amountFrom : ''}
 						onChange={(e) => {
-							if (e.target.value > tokenBalance) setAmountFrom(tokenBalance);
-							else setAmountFrom(e.target.value);
+							// if (e.target.value > tokenBalance) setAmountFrom(tokenBalance);
+							// else setAmountFrom(e.target.value);
+							setAmountFrom(e.target.value);
 						}}
 					/>
 					<FormControl sx={{ width: '10vw' }}>
 						<InputLabel id="from-select-label">From</InputLabel>
-						<Select labelId="from-select-label" value={tokenFrom} label="From" onChange={(e) => setTokenFrom(e.target.value)}>
+						<Select
+							labelId="from-select-label"
+							value={tokenFrom.symbol}
+							label="From"
+							onChange={(e) => setTokenFrom(tokens.find((token) => token.symbol === e.target.value)!)}
+						>
 							{mappedTokensFrom}
 						</Select>
 					</FormControl>
 				</Box>
 				<SwapVerticalCircleOutlinedIcon
 					onClick={(e) => {
-						setTokenTo(tokenFrom);
-						setTokenFrom(tokenTo);
+						setTokenTo(tokens.find((token) => token.symbol === tokenFrom.symbol)!);
+						setTokenFrom(tokens.find((token) => token.symbol === tokenTo.symbol)!);
 						setAmountFrom(amountTo);
 					}}
 					className="swap-icon"
@@ -319,7 +326,12 @@ export const SwapCard = ({
 					<FormControl sx={{ width: '10vw' }}>
 						<InputLabel id="to-select-label">To</InputLabel>
 
-						<Select labelId="to-select-label" value={tokenTo} label="To" onChange={(e) => setTokenTo(e.target.value)}>
+						<Select
+							labelId="to-select-label"
+							value={tokenTo.symbol}
+							label="To"
+							onChange={(e) => setTokenTo(tokens.find((token) => token.symbol === e.target.value)!)}
+						>
 							{mappedTokensTo}
 						</Select>
 					</FormControl>
@@ -373,9 +385,9 @@ export const SwapCard = ({
 				onClick={(e) => sendTx()}
 			>
 				{!isLoading ? (
-					tokenFrom === 'ETH' && tokenTo === 'WETH' ? (
+					tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH' ? (
 						'Wrap'
-					) : tokenFrom === 'WETH' && tokenTo === 'ETH' ? (
+					) : tokenFrom.symbol === 'WETH' && tokenTo.symbol === 'ETH' ? (
 						'Unwrap'
 					) : (
 						'Swap'

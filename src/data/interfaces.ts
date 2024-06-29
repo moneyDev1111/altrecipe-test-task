@@ -14,3 +14,12 @@ export interface IERC20 {
 	approve(_spender: string, _value: bigint): Promise<boolean>;
 	allowance(_owner: string, _spender: string): Promise<bigint>;
 }
+
+export interface Token {
+	address: string;
+	decimals: number;
+	// chainId: number;
+	// name: string;
+	symbol: string;
+	// url?: string | null;
+}

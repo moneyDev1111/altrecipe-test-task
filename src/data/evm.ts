@@ -178,9 +178,9 @@ export const WETH_ABI = [
 
 export const tokens = [
 	{ symbol: 'ETH', decimals: 18, address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' },
-	{ symbol: 'USDT', decimals: 6, address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' },
-	{ symbol: 'USDC', decimals: 6, address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
-	{ symbol: 'DAI', decimals: 18, address: '0x6B175474E89094C44Da98b954EedeAC495271d0F' },
-	{ symbol: 'WBTC', decimals: 8, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
+	{ symbol: 'USDT', decimals: 6, address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0' },
+	{ symbol: 'USDC', decimals: 6, address: '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8' },
+	{ symbol: 'DAI', decimals: 18, address: '0x3e622317f8C93f7328350cF0B56d9eD4C620C5d6' },
+	{ symbol: 'WBTC', decimals: 8, address: '0x92f3B59a79bFf5dc60c0d59eA13a44D082B2bdFC' },
 	{ symbol: 'WETH', decimals: 18, address: '0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9' },
 ];

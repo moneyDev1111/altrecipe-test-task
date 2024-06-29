@@ -120,6 +120,8 @@ export const SwapCard = ({
 
 				// if (tokenAddress) {
 				const tokenContract = new Contract(tokenFrom.address, tokenFrom.symbol === 'WETH' ? WETH_ABI : Erc20_ABI, provider);
+				console.log(tokenContract);
+
 				setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)));
 				// }
 			}
@@ -146,7 +148,6 @@ export const SwapCard = ({
 		if (reason === 'clickaway') {
 			return;
 		}
-
 		setOpenSnack(false);
 	};
 
@@ -154,6 +155,10 @@ export const SwapCard = ({
 		isConnected && getBalance();
 		isConnected && getWethBalance();
 	}, [isConnected, tokenFrom, txHashLink]);
+
+	useEffect(() => {
+		getBalance();
+	}, [tokenFrom]);
 
 	// const estimateFees = async () => {
 	// 	try {
@@ -205,8 +210,6 @@ export const SwapCard = ({
 	// 		console.log(error);
 	// 	}
 	// };
-	console.log('AMOUNT FROM', amountFrom);
-	console.log('AMOUNT TO', amountTo);
 
 	useEffect(() => {
 		debounceRef.current && clearTimeout(debounceRef.current);
@@ -222,10 +225,15 @@ export const SwapCard = ({
 
 				// checkPriceImpact(tokenFrom, tokenTo, formatEther(fee)).then((res) => setFeeUSD(res));
 				// checkPriceImpact(tokenFrom, tokenTo, formatEther(amountOut - fee)).then((res) => setAmountOutUSD(res));
-				checkPriceImpact(tokenFrom, tokenTo, amountFrom).then(async (res) => {
-					setAmountTo(res);
-					setAmountOutUSD(tokenTo.symbol === 'ETH' ? await priceToUsd(res) : res);
-				});
+				if ((tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH') || (tokenFrom.symbol === 'WETH' && tokenTo.symbol === 'ETH')) {
+					setAmountTo(amountFrom); // ADD MINUS FEE !!!
+					setAmountOutUSD((await inUSD(amountFrom)) ?? '');
+				} else {
+					checkPriceImpact(tokenFrom, tokenTo, amountFrom).then(async (res) => {
+						setAmountTo(res);
+						setAmountOutUSD(tokenTo.symbol === 'ETH' ? await priceToUsd(res) : res);
+					});
+				}
 
 				// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
 				// await new Promise((r) => setTimeout(r, 1000));
@@ -280,9 +288,9 @@ export const SwapCard = ({
 						type="number"
 						value={amountFrom !== '0' && amountFrom ? amountFrom : ''}
 						onChange={(e) => {
-							// if (e.target.value > tokenBalance) setAmountFrom(tokenBalance);
-							// else setAmountFrom(e.target.value);
-							setAmountFrom(e.target.value);
+							if (e.target.value > tokenBalance) setAmountFrom(tokenBalance);
+							else setAmountFrom(e.target.value);
+							// setAmountFrom(e.target.value);
 						}}
 					/>
 					<FormControl sx={{ width: '10vw' }}>

@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
-import { ThemeProvider } from 'styled-components'
+import { ThemeProvider } from '@mui/material/styles'
+
 import theme from './data/uiTheme'
 import CssBaseline from '@mui/material/CssBaseline'
 

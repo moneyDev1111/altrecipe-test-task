@@ -1,21 +1,16 @@
 {
-	"name": "material-ui-cra-styled-components-ts",
+	"name": "degen-dex",
 	"version": "5.0.0",
 	"private": true,
 	"dependencies": {
 		"@mui/icons-material": "^5.15.20",
 		"@mui/lab": "latest",
 		"@mui/material": "latest",
-		"@mui/styled-engine-sc": "latest",
-		"@testing-library/jest-dom": "latest",
-		"@testing-library/react": "latest",
-		"@testing-library/user-event": "latest",
 		"@web3modal/ethers": "^4.2.3",
 		"ethers": "^6.13.0",
 		"react": "latest",
 		"react-dom": "latest",
-		"react-scripts": "latest",
-		"styled-components": "latest"
+		"react-scripts": "latest"
 	},
 	"scripts": {
 		"tsc": "./node_modules/.bin/tsc",

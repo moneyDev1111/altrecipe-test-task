@@ -24,7 +24,15 @@ import {
 	formatUnits,
 	parseUnits,
 } from 'ethers'
-import { Dispatch, SetStateAction, useEffect, useRef, useState, useTransition } from 'react'
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	useTransition,
+} from 'react'
 import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import SwapVerticalCircleOutlinedIcon from '@mui/icons-material/SwapVerticalCircleOutlined'
@@ -72,7 +80,9 @@ export const SwapCard = ({
 	const sendTx = () => {
 		startTransition(async () => {
 			try {
-				const provider = new BrowserProvider(walletProvider!)
+				if (!walletProvider) return
+
+				const provider = new BrowserProvider(walletProvider)
 				const signer = await provider.getSigner()
 
 				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
@@ -115,63 +125,72 @@ export const SwapCard = ({
 		})
 	}
 
-	const getBalance = async () => {
-		try {
-			const provider = new BrowserProvider(walletProvider!)
-
-			if (tokenFrom.symbol === 'ETH') {
-				const ethBalance = formatUnits(await provider.getBalance(accountAddress!), 18)
-				setTokenBalance(ethBalance)
-				setEthBalance(ethBalance)
-			} else {
-				// const tokenAddress = tokens.find((token) => token.symbol === tokenFrom.symbol)?.address;
-
-				// if (tokenAddress) {
-				const tokenContract = new Contract(
-					tokenFrom.address,
-					tokenFrom.symbol === 'WETH' ? WETH_ABI : Erc20_ABI,
-					provider
-				)
-				console.log(tokenContract)
-
-				setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
-				// }
-			}
-		} catch (error: any) {
-			console.log(error)
-		}
-	}
-
-	const getWethBalance = async () => {
-		try {
-			const provider = new BrowserProvider(walletProvider!)
-
-			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
-
-			if (tokenAddress) {
-				const tokenContract = new Contract(tokenAddress, WETH_ABI, provider)
-				setWethBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
-			}
-		} catch (error: any) {
-			console.log(error)
-		}
-	}
-
 	const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
 		if (reason === 'clickaway') {
 			return
 		}
+
 		setOpenSnack(false)
 	}
 
 	useEffect(() => {
-		isConnected && getBalance()
-		isConnected && getWethBalance()
+		const getWethBalance = async () => {
+			try {
+				if (!walletProvider) return
+
+				const provider = new BrowserProvider(walletProvider)
+
+				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
+
+				if (tokenAddress) {
+					const tokenContract = new Contract(tokenAddress, WETH_ABI, provider)
+					setWethBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
+				}
+			} catch (error: any) {
+				console.log(error)
+			}
+		}
+
+		const getBalance = useCallback(async () => {
+			if (!walletProvider || !accountAddress) return
+
+			const provider = new BrowserProvider(walletProvider)
+
+			try {
+				if (tokenFrom.symbol === 'ETH') {
+					const ethBalance = formatUnits(await provider.getBalance(accountAddress), 18)
+					setTokenBalance(ethBalance)
+					setEthBalance(ethBalance)
+				} else {
+					// const tokenAddress = tokens.find((token) => token.symbol === tokenFrom.symbol)?.address;
+
+					// if (tokenAddress) {
+					const tokenContract = new Contract(
+						tokenFrom.address,
+						tokenFrom.symbol === 'WETH' ? WETH_ABI : Erc20_ABI,
+						provider
+					)
+					console.log(tokenContract)
+
+					setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
+					// }
+				}
+			} catch (error: any) {
+				console.log(error)
+			} finally {
+				provider.destroy()
+			}
+		}, [tokenFrom])
+
+		if (isConnected) {
+			getWethBalance()
+			getBalance()
+		}
 	}, [isConnected, tokenFrom, txHashLink])
 
-	useEffect(() => {
-		getBalance()
-	}, [tokenFrom])
+	// useEffect(() => {
+	// 	getBalance()
+	// }, [tokenFrom])
 
 	// const estimateFees = async () => {
 	// 	try {

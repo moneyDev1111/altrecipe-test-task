@@ -13,15 +13,23 @@ import {
 	Snackbar,
 	TextField,
 	Tooltip,
-} from '@mui/material';
+} from '@mui/material'
 
-import { BrowserProvider, Contract, Eip1193Provider, TransactionReceipt, formatEther, formatUnits, parseUnits } from 'ethers';
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
-import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import SwapVerticalCircleOutlinedIcon from '@mui/icons-material/SwapVerticalCircleOutlined';
-import { checkPriceImpact, inUSD, priceToUsd } from '../data/helpers';
-import { Token } from '../data/interfaces';
+import {
+	BrowserProvider,
+	Contract,
+	Eip1193Provider,
+	TransactionReceipt,
+	formatEther,
+	formatUnits,
+	parseUnits,
+} from 'ethers'
+import { Dispatch, SetStateAction, useEffect, useRef, useState, useTransition } from 'react'
+import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm'
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
+import SwapVerticalCircleOutlinedIcon from '@mui/icons-material/SwapVerticalCircleOutlined'
+import { checkPriceImpact, inUSD, priceToUsd } from '../data/helpers'
+import { Token } from '../data/interfaces'
 
 export const SwapCard = ({
 	isConnected,
@@ -36,129 +44,134 @@ export const SwapCard = ({
 	tokenTo,
 	setTokenTo,
 }: {
-	isConnected: boolean;
-	walletProvider: Eip1193Provider | undefined;
-	accountAddress: string | undefined;
-	tokenBalance: string;
-	setTokenBalance: Dispatch<SetStateAction<string>>;
-	setEthBalance: Dispatch<SetStateAction<string>>;
-	setWethBalance: Dispatch<SetStateAction<string>>;
-	tokenFrom: Token;
-	setTokenFrom: Dispatch<SetStateAction<Token>>;
-	tokenTo: Token;
-	setTokenTo: Dispatch<SetStateAction<Token>>;
+	isConnected: boolean
+	walletProvider: Eip1193Provider | undefined
+	accountAddress: string | undefined
+	tokenBalance: string
+	setTokenBalance: Dispatch<SetStateAction<string>>
+	setEthBalance: Dispatch<SetStateAction<string>>
+	setWethBalance: Dispatch<SetStateAction<string>>
+	tokenFrom: Token
+	setTokenFrom: Dispatch<SetStateAction<Token>>
+	tokenTo: Token
+	setTokenTo: Dispatch<SetStateAction<Token>>
 }) => {
-	const debounceRef = useRef<NodeJS.Timeout>();
+	const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
-	const [isLoading, setIsLoading] = useState(false);
-	const [openSnack, setOpenSnack] = useState(false);
+	const [isPending, startTransition] = useTransition()
+	const [openSnack, setOpenSnack] = useState(false)
 
-	const [amountFrom, setAmountFrom] = useState('0');
-	const [amountTo, setAmountTo] = useState('');
+	const [amountFrom, setAmountFrom] = useState('0')
+	const [amountTo, setAmountTo] = useState('')
 	// const { enqueueSnackbar } = useSnackbar();
-	const [feeUSD, setFeeUSD] = useState('');
-	const [AmountOutUSD, setAmountOutUSD] = useState('');
+	const [feeUSD, setFeeUSD] = useState('')
+	const [AmountOutUSD, setAmountOutUSD] = useState('')
 
-	const [txHashLink, setTxHashLink] = useState('');
+	const [txHashLink, setTxHashLink] = useState('')
 
-	const sendTx = async () => {
-		setIsLoading(true);
+	const sendTx = () => {
+		startTransition(async () => {
+			try {
+				const provider = new BrowserProvider(walletProvider!)
+				const signer = await provider.getSigner()
 
-		try {
-			const provider = new BrowserProvider(walletProvider!);
-			const signer = await provider.getSigner();
+				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
+				const WETH_Contract = new Contract(tokenAddress!, WETH_ABI)
 
-			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address;
-			const WETH_Contract = new Contract(tokenAddress!, WETH_ABI);
+				if (tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH' && walletProvider) {
+					//@ts-ignore
+					const res = await WETH_Contract.connect(signer).deposit({
+						value: parseUnits(amountTo, 18),
+					})
 
-			if (tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH' && walletProvider) {
-				//@ts-ignore
-				const res = await WETH_Contract.connect(signer).deposit({ value: parseUnits(amountTo, 18) });
+					const txRes: TransactionReceipt = await res.wait()
 
-				const txRes: TransactionReceipt = await res.wait();
+					console.log(txRes)
 
-				console.log(txRes);
+					if (txRes.status === 1) {
+						setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`)
 
-				if (txRes.status === 1) {
-					setIsLoading(false);
-					setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`);
+						setOpenSnack(true)
+					}
+				} else {
+					//@ts-ignore
+					const res = await WETH_Contract.connect(signer).withdraw(
+						parseUnits(amountFrom, 18)
+					)
 
-					setOpenSnack(true);
+					const txRes = await res.wait()
+
+					console.log(txRes)
+
+					if (txRes.status === 1) {
+						setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`)
+
+						setOpenSnack(true)
+					}
 				}
-			} else {
-				//@ts-ignore
-				const res = await WETH_Contract.connect(signer).withdraw(parseUnits(amountFrom, 18));
-
-				const txRes = await res.wait();
-
-				console.log(txRes);
-
-				if (txRes.status === 1) {
-					setIsLoading(false);
-					setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`);
-
-					setOpenSnack(true);
-				}
+			} catch (error) {
+				console.log(error)
 			}
-		} catch (error) {
-			setIsLoading(false);
-
-			console.log(error);
-		}
-	};
+		})
+	}
 
 	const getBalance = async () => {
 		try {
-			const provider = new BrowserProvider(walletProvider!);
+			const provider = new BrowserProvider(walletProvider!)
 
 			if (tokenFrom.symbol === 'ETH') {
-				const ethBalance = formatUnits(await provider.getBalance(accountAddress!), 18);
-				setTokenBalance(ethBalance);
-				setEthBalance(ethBalance);
+				const ethBalance = formatUnits(await provider.getBalance(accountAddress!), 18)
+				setTokenBalance(ethBalance)
+				setEthBalance(ethBalance)
 			} else {
 				// const tokenAddress = tokens.find((token) => token.symbol === tokenFrom.symbol)?.address;
 
 				// if (tokenAddress) {
-				const tokenContract = new Contract(tokenFrom.address, tokenFrom.symbol === 'WETH' ? WETH_ABI : Erc20_ABI, provider);
-				console.log(tokenContract);
+				const tokenContract = new Contract(
+					tokenFrom.address,
+					tokenFrom.symbol === 'WETH' ? WETH_ABI : Erc20_ABI,
+					provider
+				)
+				console.log(tokenContract)
 
-				setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)));
+				setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
 				// }
 			}
 		} catch (error: any) {
-			console.log(error);
+			console.log(error)
 		}
-	};
+	}
+
 	const getWethBalance = async () => {
 		try {
-			const provider = new BrowserProvider(walletProvider!);
+			const provider = new BrowserProvider(walletProvider!)
 
-			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address;
+			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
 
 			if (tokenAddress) {
-				const tokenContract = new Contract(tokenAddress, WETH_ABI, provider);
-				setWethBalance(formatUnits(await tokenContract.balanceOf(accountAddress)));
+				const tokenContract = new Contract(tokenAddress, WETH_ABI, provider)
+				setWethBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
 			}
 		} catch (error: any) {
-			console.log(error);
+			console.log(error)
 		}
-	};
+	}
 
 	const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
 		if (reason === 'clickaway') {
-			return;
+			return
 		}
-		setOpenSnack(false);
-	};
+		setOpenSnack(false)
+	}
 
 	useEffect(() => {
-		isConnected && getBalance();
-		isConnected && getWethBalance();
-	}, [isConnected, tokenFrom, txHashLink]);
+		isConnected && getBalance()
+		isConnected && getWethBalance()
+	}, [isConnected, tokenFrom, txHashLink])
 
 	useEffect(() => {
-		getBalance();
-	}, [tokenFrom]);
+		getBalance()
+	}, [tokenFrom])
 
 	// const estimateFees = async () => {
 	// 	try {
@@ -212,7 +225,7 @@ export const SwapCard = ({
 	// };
 
 	useEffect(() => {
-		debounceRef.current && clearTimeout(debounceRef.current);
+		debounceRef.current && clearTimeout(debounceRef.current)
 
 		if (+amountFrom > 0 && !/e\-\d*/.test(amountFrom)) {
 			debounceRef.current = setTimeout(async () => {
@@ -225,14 +238,17 @@ export const SwapCard = ({
 
 				// checkPriceImpact(tokenFrom, tokenTo, formatEther(fee)).then((res) => setFeeUSD(res));
 				// checkPriceImpact(tokenFrom, tokenTo, formatEther(amountOut - fee)).then((res) => setAmountOutUSD(res));
-				if ((tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH') || (tokenFrom.symbol === 'WETH' && tokenTo.symbol === 'ETH')) {
-					setAmountTo(amountFrom); // ADD MINUS FEE !!!
-					setAmountOutUSD((await inUSD(amountFrom)) ?? '');
+				if (
+					(tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH') ||
+					(tokenFrom.symbol === 'WETH' && tokenTo.symbol === 'ETH')
+				) {
+					setAmountTo(amountFrom) // ADD MINUS FEE !!!
+					setAmountOutUSD((await inUSD(amountFrom)) ?? '')
 				} else {
 					checkPriceImpact(tokenFrom, tokenTo, amountFrom).then(async (res) => {
-						setAmountTo(res);
-						setAmountOutUSD(tokenTo.symbol === 'ETH' ? await priceToUsd(res) : res);
-					});
+						setAmountTo(res)
+						setAmountOutUSD(tokenTo.symbol === 'ETH' ? await priceToUsd(res) : res)
+					})
 				}
 
 				// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
@@ -240,12 +256,13 @@ export const SwapCard = ({
 				// setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '');
 				// console.log('IN USD', (await inUSD(formatUnits(amountOut, decimals))) ?? '');
 				// }
-			}, 300);
+			}, 300)
 		} else {
-			setAmountTo(amountFrom);
+			setAmountTo(amountFrom)
 		}
-		return () => clearTimeout(debounceRef.current);
-	}, [amountFrom]);
+
+		return () => clearTimeout(debounceRef.current!)
+	}, [amountFrom])
 
 	const mappedTokensFrom = tokens
 		.filter((token) => token.symbol !== tokenTo.symbol)
@@ -253,7 +270,7 @@ export const SwapCard = ({
 			<MenuItem key={index} value={token.symbol}>
 				{token.symbol}
 			</MenuItem>
-		));
+		))
 
 	const mappedTokensTo = tokens
 		.filter((token) => token.symbol !== tokenFrom.symbol)
@@ -261,7 +278,7 @@ export const SwapCard = ({
 			<MenuItem key={index} value={token.symbol}>
 				{token.symbol}
 			</MenuItem>
-		));
+		))
 
 	return (
 		<Card
@@ -276,20 +293,35 @@ export const SwapCard = ({
 			}}
 			className="card-swap"
 		>
-			<Box style={{ position: 'relative', display: 'flex', gap: '1em', flexDirection: 'column' }}>
-				<Box display="flex" flexDirection="row" component="form" noValidate autoComplete="off">
+			<Box
+				style={{
+					position: 'relative',
+					display: 'flex',
+					gap: '1em',
+					flexDirection: 'column',
+				}}
+			>
+				<Box
+					display="flex"
+					flexDirection="row"
+					component="form"
+					noValidate
+					autoComplete="off"
+				>
 					<TextField
-						InputProps={{
-							inputProps: { min: 0, max: tokenBalance, step: '0.0001' },
+						type="number"
+						slotProps={{
+							input: {
+								inputProps: { min: 0, max: tokenBalance, step: '0.0001' },
+							},
 						}}
 						fullWidth
 						id="outlined-from"
 						label="Amount From"
-						type="number"
 						value={amountFrom !== '0' && amountFrom ? amountFrom : ''}
 						onChange={(e) => {
-							if (e.target.value > tokenBalance) setAmountFrom(tokenBalance);
-							else setAmountFrom(e.target.value);
+							if (e.target.value > tokenBalance) setAmountFrom(tokenBalance)
+							else setAmountFrom(e.target.value)
 							// setAmountFrom(e.target.value);
 						}}
 					/>
@@ -299,22 +331,32 @@ export const SwapCard = ({
 							labelId="from-select-label"
 							value={tokenFrom.symbol}
 							label="From"
-							onChange={(e) => setTokenFrom(tokens.find((token) => token.symbol === e.target.value)!)}
+							onChange={(e) =>
+								setTokenFrom(
+									tokens.find((token) => token.symbol === e.target.value)!
+								)
+							}
 						>
 							{mappedTokensFrom}
 						</Select>
 					</FormControl>
 				</Box>
 				<SwapVerticalCircleOutlinedIcon
-					onClick={(e) => {
-						setTokenTo(tokens.find((token) => token.symbol === tokenFrom.symbol)!);
-						setTokenFrom(tokens.find((token) => token.symbol === tokenTo.symbol)!);
-						setAmountFrom(amountTo);
+					onClick={() => {
+						setTokenTo(tokens.find((token) => token.symbol === tokenFrom.symbol)!)
+						setTokenFrom(tokens.find((token) => token.symbol === tokenTo.symbol)!)
+						setAmountFrom(amountTo)
 					}}
 					className="swap-icon"
 				/>
 
-				<Box display="flex" flexDirection="row" component="form" noValidate autoComplete="off">
+				<Box
+					display="flex"
+					flexDirection="row"
+					component="form"
+					noValidate
+					autoComplete="off"
+				>
 					<TextField
 						InputProps={
 							{
@@ -327,8 +369,8 @@ export const SwapCard = ({
 						type="number"
 						value={amountTo !== '0' && amountFrom ? amountTo : ''}
 						onChange={(e) => {
-							if (e.target.value > tokenBalance) setAmountTo(tokenBalance);
-							else setAmountTo(e.target.value);
+							if (e.target.value > tokenBalance) setAmountTo(tokenBalance)
+							else setAmountTo(e.target.value)
 						}}
 					/>
 					<FormControl sx={{ width: '10vw' }}>
@@ -338,7 +380,9 @@ export const SwapCard = ({
 							labelId="to-select-label"
 							value={tokenTo.symbol}
 							label="To"
-							onChange={(e) => setTokenTo(tokens.find((token) => token.symbol === e.target.value)!)}
+							onChange={(e) =>
+								setTokenTo(tokens.find((token) => token.symbol === e.target.value)!)
+							}
 						>
 							{mappedTokensTo}
 						</Select>
@@ -347,23 +391,38 @@ export const SwapCard = ({
 			</Box>
 			{amountFrom !== '0' && amountFrom && !/e\-\d*/.test(amountFrom) && (
 				<Tooltip title="No rate limits and fee is already deducted" placement="top">
-					<Box component={'section'} padding={0} margin={0} fontSize={'0.75rem'} textAlign={'center'} paddingTop={'0.3em'}>
+					<Box
+						component={'section'}
+						padding={0}
+						margin={0}
+						fontSize={'0.75rem'}
+						textAlign={'center'}
+						paddingTop={'0.3em'}
+					>
 						<p style={{ margin: 0, padding: 0 }}>
-							The receive tokens amount is ~ <span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
+							The receive tokens amount is ~{' '}
+							<span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
 						</p>
 						<p style={{ margin: 0, padding: 0 }}>
-							Fee is ~ <span className="amount-out__usd">${(+feeUSD).toFixed(2)}</span>
+							Fee is ~{' '}
+							<span className="amount-out__usd">${(+feeUSD).toFixed(2)}</span>
 						</p>
 					</Box>
 				</Tooltip>
 			)}
 
-			<Box display="flex" justifyContent="center" alignItems={'center'} gap={'1em'} mt={'1em'}>
+			<Box
+				display="flex"
+				justifyContent="center"
+				alignItems={'center'}
+				gap={'1em'}
+				mt={'1em'}
+			>
 				<Box component={'span'} width={'70%'}>
 					<Slider
 						disabled={!isConnected}
 						onChange={(e, value) => {
-							setAmountFrom(String(value));
+							setAmountFrom(String(value))
 						}}
 						sx={{ width: '90%', margin: '0 auto', display: 'table' }}
 						aria-label="amount"
@@ -378,7 +437,7 @@ export const SwapCard = ({
 				<Button
 					disabled={!isConnected}
 					onClick={() => {
-						setAmountFrom(tokenBalance);
+						setAmountFrom(tokenBalance)
 					}}
 					variant="contained"
 				>
@@ -386,13 +445,20 @@ export const SwapCard = ({
 				</Button>
 			</Box>
 			<Button
-				disabled={isLoading || amountFrom === '0' || !amountFrom || /\-/.test(amountTo) || /e\-\d*/.test(amountFrom) || /\-/.test(AmountOutUSD)}
+				disabled={
+					isPending ||
+					amountFrom === '0' ||
+					!amountFrom ||
+					/\-/.test(amountTo) ||
+					/e\-\d*/.test(amountFrom) ||
+					/\-/.test(AmountOutUSD)
+				}
 				variant="outlined"
-				endIcon={!isLoading ? <AccountBalanceWalletIcon /> : null}
+				endIcon={!isPending ? <AccountBalanceWalletIcon /> : null}
 				sx={{ fontSize: '1.25rem', width: '75%', margin: '1em auto 0 auto' }}
 				onClick={(e) => sendTx()}
 			>
-				{!isLoading ? (
+				{!isPending ? (
 					tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH' ? (
 						'Wrap'
 					) : tokenFrom.symbol === 'WETH' && tokenTo.symbol === 'ETH' ? (
@@ -421,7 +487,13 @@ export const SwapCard = ({
 				<Alert
 					severity="success"
 					variant="filled"
-					sx={{ width: '100%', fontSize: '1.115rem', color: 'rgb(224, 224, 224)', display: 'flex', alignContent: 'center' }}
+					sx={{
+						width: '100%',
+						fontSize: '1.115rem',
+						color: 'rgb(224, 224, 224)',
+						display: 'flex',
+						alignContent: 'center',
+					}}
 				>
 					Tx sent successfully
 					<br />
@@ -431,5 +503,5 @@ export const SwapCard = ({
 				</Alert>
 			</Snackbar>
 		</Card>
-	);
-};
+	)
+}

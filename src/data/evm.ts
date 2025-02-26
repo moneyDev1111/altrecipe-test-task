@@ -1,7 +1,23 @@
 export const Erc20_ABI = [
-	{ constant: true, inputs: [], name: 'name', outputs: [{ name: '', type: 'string' }], payable: false, stateMutability: 'view', type: 'function' },
+	{
+		constant: true,
+		inputs: [],
+		name: 'name',
+		outputs: [{ name: '', type: 'string' }],
+		payable: false,
+		stateMutability: 'view',
+		type: 'function',
+	},
 
-	{ constant: true, inputs: [], name: 'symbol', outputs: [{ name: '', type: 'string' }], payable: false, stateMutability: 'view', type: 'function' },
+	{
+		constant: true,
+		inputs: [],
+		name: 'symbol',
+		outputs: [{ name: '', type: 'string' }],
+		payable: false,
+		stateMutability: 'view',
+		type: 'function',
+	},
 	{
 		constant: false,
 		inputs: [
@@ -36,7 +52,15 @@ export const Erc20_ABI = [
 		stateMutability: 'nonpayable',
 		type: 'function',
 	},
-	{ constant: true, inputs: [], name: 'decimals', outputs: [{ name: '', type: 'uint8' }], payable: false, stateMutability: 'view', type: 'function' },
+	{
+		constant: true,
+		inputs: [],
+		name: 'decimals',
+		outputs: [{ name: '', type: 'uint8' }],
+		payable: false,
+		stateMutability: 'view',
+		type: 'function',
+	},
 	{
 		constant: true,
 		inputs: [{ name: '', type: 'address' }],
@@ -72,7 +96,7 @@ export const Erc20_ABI = [
 		stateMutability: 'view',
 		type: 'function',
 	},
-];
+]
 
 export const WETH_ABI = [
 	{
@@ -140,11 +164,35 @@ export const WETH_ABI = [
 		stateMutability: 'view',
 		type: 'function',
 	},
-	{ inputs: [], name: 'decimals', outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }], stateMutability: 'view', type: 'function' },
+	{
+		inputs: [],
+		name: 'decimals',
+		outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }],
+		stateMutability: 'view',
+		type: 'function',
+	},
 	{ inputs: [], name: 'deposit', outputs: [], stateMutability: 'payable', type: 'function' },
-	{ inputs: [], name: 'name', outputs: [{ internalType: 'string', name: '', type: 'string' }], stateMutability: 'view', type: 'function' },
-	{ inputs: [], name: 'symbol', outputs: [{ internalType: 'string', name: '', type: 'string' }], stateMutability: 'view', type: 'function' },
-	{ inputs: [], name: 'totalSupply', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+	{
+		inputs: [],
+		name: 'name',
+		outputs: [{ internalType: 'string', name: '', type: 'string' }],
+		stateMutability: 'view',
+		type: 'function',
+	},
+	{
+		inputs: [],
+		name: 'symbol',
+		outputs: [{ internalType: 'string', name: '', type: 'string' }],
+		stateMutability: 'view',
+		type: 'function',
+	},
+	{
+		inputs: [],
+		name: 'totalSupply',
+		outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+		stateMutability: 'view',
+		type: 'function',
+	},
 	{
 		inputs: [
 			{ internalType: 'address', name: 'dst', type: 'address' },
@@ -174,7 +222,7 @@ export const WETH_ABI = [
 		type: 'function',
 	},
 	{ stateMutability: 'payable', type: 'receive' },
-];
+]
 
 export const tokens = [
 	{ symbol: 'ETH', decimals: 18, address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' },
@@ -183,4 +231,4 @@ export const tokens = [
 	{ symbol: 'DAI', decimals: 18, address: '0x3e622317f8C93f7328350cF0B56d9eD4C620C5d6' },
 	{ symbol: 'WBTC', decimals: 8, address: '0x92f3B59a79bFf5dc60c0d59eA13a44D082B2bdFC' },
 	{ symbol: 'WETH', decimals: 18, address: '0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9' },
-];
+] as const

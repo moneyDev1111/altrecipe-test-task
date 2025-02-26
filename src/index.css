@@ -33,6 +33,7 @@ button.btn-wallet__connect {
 div.card-swap {
 	box-shadow: hsl(0deg 0% 95.12% / 14%) 3px 3px;
 }
+
 .swap-icon {
 	background-color: #1e1e1e;
 	border-radius: 50%;

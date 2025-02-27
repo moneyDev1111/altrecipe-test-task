@@ -3,9 +3,11 @@
 	"version": "5.0.0",
 	"private": true,
 	"dependencies": {
-		"@mui/icons-material": "^5.15.20",
+		"@emotion/react": "^11.14.0",
+		"@emotion/styled": "^11.14.0",
+		"@mui/icons-material": "^5.16.14",
 		"@mui/lab": "latest",
-		"@mui/material": "latest",
+		"@mui/material": "^6.4.5",
 		"@web3modal/ethers": "^4.2.3",
 		"ethers": "^6.13.0",
 		"react": "latest",

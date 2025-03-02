@@ -13,6 +13,7 @@ import {
 	Snackbar,
 	TextField,
 	Tooltip,
+	Typography,
 } from '@mui/material'
 
 import {
@@ -24,15 +25,7 @@ import {
 	formatUnits,
 	parseUnits,
 } from 'ethers'
-import {
-	Dispatch,
-	SetStateAction,
-	startTransition,
-	useEffect,
-	useRef,
-	useState,
-	useTransition,
-} from 'react'
+import { Dispatch, SetStateAction, useEffect, useRef, useState, useTransition } from 'react'
 import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import SwapVerticalCircleOutlinedIcon from '@mui/icons-material/SwapVerticalCircleOutlined'
@@ -78,8 +71,10 @@ export const SwapCard = ({
 
 	const sendTx = () => {
 		startTransition(async () => {
+			if (!walletProvider || !accountAddress) return
+
 			try {
-				const provider = new BrowserProvider(walletProvider!)
+				const provider = new BrowserProvider(walletProvider)
 				const signer = await provider.getSigner()
 
 				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
@@ -122,11 +117,13 @@ export const SwapCard = ({
 	}
 
 	const getBalance = async () => {
+		if (!walletProvider || !accountAddress) return
+
 		try {
-			const provider = new BrowserProvider(walletProvider!)
+			const provider = new BrowserProvider(walletProvider)
 
 			if (tokenFrom.symbol === 'ETH') {
-				const ethBalance = formatUnits(await provider.getBalance(accountAddress!), 18)
+				const ethBalance = formatUnits(await provider.getBalance(accountAddress), 18)
 				setTokenBalance(ethBalance)
 				setEthBalance(ethBalance)
 			} else {
@@ -147,9 +144,12 @@ export const SwapCard = ({
 			console.log(error)
 		}
 	}
+
 	const getWethBalance = async () => {
+		if (!walletProvider || !accountAddress) return
+
 		try {
-			const provider = new BrowserProvider(walletProvider!)
+			const provider = new BrowserProvider(walletProvider)
 
 			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
 
@@ -298,7 +298,7 @@ export const SwapCard = ({
 			className="card-swap"
 		>
 			<Box
-				style={{
+				sx={{
 					position: 'relative',
 					display: 'flex',
 					gap: '1em',
@@ -401,14 +401,14 @@ export const SwapCard = ({
 						textAlign={'center'}
 						paddingTop={'0.3em'}
 					>
-						<p style={{ margin: 0, padding: 0 }}>
+						<Typography component="p" sx={{ margin: 0, padding: 0 }}>
 							The receive tokens amount is ~{' '}
 							<span className="amount-out__usd">${(+AmountOutUSD).toFixed(2)}</span>
-						</p>
-						<p style={{ margin: 0, padding: 0 }}>
+						</Typography>
+						<Typography component="p" sx={{ margin: 0, padding: 0 }}>
 							Fee is ~{' '}
 							<span className="amount-out__usd">${(+feeUSD).toFixed(2)}</span>
-						</p>
+						</Typography>
 					</Box>
 				</Tooltip>
 			)}

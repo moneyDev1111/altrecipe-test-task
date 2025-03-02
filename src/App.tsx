@@ -7,6 +7,7 @@ import {
 	useWeb3ModalAccount,
 	useWeb3ModalProvider,
 } from '@web3modal/ethers/react'
+
 import { Button, Tooltip } from '@mui/material'
 
 import { useWeb3Modal } from '@web3modal/ethers/react'

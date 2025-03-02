@@ -27,7 +27,7 @@ import {
 import {
 	Dispatch,
 	SetStateAction,
-	useCallback,
+	startTransition,
 	useEffect,
 	useRef,
 	useState,
@@ -64,8 +64,7 @@ export const SwapCard = ({
 	tokenTo: Token
 	setTokenTo: Dispatch<SetStateAction<Token>>
 }) => {
-	const debounceRef = useRef<NodeJS.Timeout | null>(null)
-
+	const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined)
 	const [isPending, startTransition] = useTransition()
 	const [openSnack, setOpenSnack] = useState(false)
 
@@ -80,9 +79,7 @@ export const SwapCard = ({
 	const sendTx = () => {
 		startTransition(async () => {
 			try {
-				if (!walletProvider) return
-
-				const provider = new BrowserProvider(walletProvider)
+				const provider = new BrowserProvider(walletProvider!)
 				const signer = await provider.getSigner()
 
 				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
@@ -108,7 +105,6 @@ export const SwapCard = ({
 					const res = await WETH_Contract.connect(signer).withdraw(
 						parseUnits(amountFrom, 18)
 					)
-
 					const txRes = await res.wait()
 
 					console.log(txRes)
@@ -125,72 +121,62 @@ export const SwapCard = ({
 		})
 	}
 
+	const getBalance = async () => {
+		try {
+			const provider = new BrowserProvider(walletProvider!)
+
+			if (tokenFrom.symbol === 'ETH') {
+				const ethBalance = formatUnits(await provider.getBalance(accountAddress!), 18)
+				setTokenBalance(ethBalance)
+				setEthBalance(ethBalance)
+			} else {
+				// const tokenAddress = tokens.find((token) => token.symbol === tokenFrom.symbol)?.address;
+
+				// if (tokenAddress) {
+				const tokenContract = new Contract(
+					tokenFrom.address,
+					tokenFrom.symbol === 'WETH' ? WETH_ABI : Erc20_ABI,
+					provider
+				)
+				console.log(tokenContract)
+
+				setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
+				// }
+			}
+		} catch (error: any) {
+			console.log(error)
+		}
+	}
+	const getWethBalance = async () => {
+		try {
+			const provider = new BrowserProvider(walletProvider!)
+
+			const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
+
+			if (tokenAddress) {
+				const tokenContract = new Contract(tokenAddress, WETH_ABI, provider)
+				setWethBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
+			}
+		} catch (error: any) {
+			console.log(error)
+		}
+	}
+
 	const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
 		if (reason === 'clickaway') {
 			return
 		}
-
 		setOpenSnack(false)
 	}
 
 	useEffect(() => {
-		const getWethBalance = async () => {
-			try {
-				if (!walletProvider) return
-
-				const provider = new BrowserProvider(walletProvider)
-
-				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
-
-				if (tokenAddress) {
-					const tokenContract = new Contract(tokenAddress, WETH_ABI, provider)
-					setWethBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
-				}
-			} catch (error: any) {
-				console.log(error)
-			}
-		}
-
-		const getBalance = useCallback(async () => {
-			if (!walletProvider || !accountAddress) return
-
-			const provider = new BrowserProvider(walletProvider)
-
-			try {
-				if (tokenFrom.symbol === 'ETH') {
-					const ethBalance = formatUnits(await provider.getBalance(accountAddress), 18)
-					setTokenBalance(ethBalance)
-					setEthBalance(ethBalance)
-				} else {
-					// const tokenAddress = tokens.find((token) => token.symbol === tokenFrom.symbol)?.address;
-
-					// if (tokenAddress) {
-					const tokenContract = new Contract(
-						tokenFrom.address,
-						tokenFrom.symbol === 'WETH' ? WETH_ABI : Erc20_ABI,
-						provider
-					)
-					console.log(tokenContract)
-
-					setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
-					// }
-				}
-			} catch (error: any) {
-				console.log(error)
-			} finally {
-				provider.destroy()
-			}
-		}, [tokenFrom])
-
-		if (isConnected) {
-			getWethBalance()
-			getBalance()
-		}
+		isConnected && getBalance()
+		isConnected && getWethBalance()
 	}, [isConnected, tokenFrom, txHashLink])
 
-	// useEffect(() => {
-	// 	getBalance()
-	// }, [tokenFrom])
+	useEffect(() => {
+		getBalance()
+	}, [tokenFrom])
 
 	// const estimateFees = async () => {
 	// 	try {
@@ -279,8 +265,7 @@ export const SwapCard = ({
 		} else {
 			setAmountTo(amountFrom)
 		}
-
-		return () => clearTimeout(debounceRef.current!)
+		return () => clearTimeout(debounceRef.current)
 	}, [amountFrom])
 
 	const mappedTokensFrom = tokens
@@ -328,10 +313,13 @@ export const SwapCard = ({
 					autoComplete="off"
 				>
 					<TextField
-						type="number"
 						slotProps={{
 							input: {
-								inputProps: { min: 0, max: tokenBalance, step: '0.0001' },
+								inputProps: {
+									min: 0,
+									max: tokenBalance,
+									step: '0.0001',
+								},
 							},
 						}}
 						fullWidth
@@ -361,7 +349,7 @@ export const SwapCard = ({
 					</FormControl>
 				</Box>
 				<SwapVerticalCircleOutlinedIcon
-					onClick={() => {
+					onClick={(e) => {
 						setTokenTo(tokens.find((token) => token.symbol === tokenFrom.symbol)!)
 						setTokenFrom(tokens.find((token) => token.symbol === tokenTo.symbol)!)
 						setAmountFrom(amountTo)
@@ -377,11 +365,6 @@ export const SwapCard = ({
 					autoComplete="off"
 				>
 					<TextField
-						InputProps={
-							{
-								// inputProps: { min: 0, max: tokenBalance, step: '0.0001' },
-							}
-						}
 						fullWidth
 						id="outlined-to"
 						label="Amount To"

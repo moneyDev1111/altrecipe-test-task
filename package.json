@@ -3,13 +3,12 @@
 	"version": "5.0.0",
 	"private": true,
 	"dependencies": {
-		"@emotion/react": "^11.14.0",
-		"@emotion/styled": "^11.14.0",
 		"@mui/icons-material": "^5.16.14",
 		"@mui/lab": "latest",
-		"@mui/material": "^6.4.5",
+		"@mui/material": "latest",
+		"@mui/styled-engine-sc": "latest",
 		"@web3modal/ethers": "^4.2.3",
-		"ethers": "^6.13.0",
+		"ethers": "^6.13.5",
 		"react": "latest",
 		"react-dom": "latest",
 		"react-scripts": "latest"

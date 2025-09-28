@@ -27,11 +27,11 @@ import {
 	parseUnits,
 } from 'ethers'
 import { Dispatch, SetStateAction, useEffect, useRef, useState, useTransition } from 'react'
-import { Erc20_ABI, WETH_ABI, tokens } from '../data/evm'
+import { Erc20_ABI, WETH_ABI, tokens } from '../utils/evm'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import SwapVerticalCircleOutlinedIcon from '@mui/icons-material/SwapVerticalCircleOutlined'
-import { checkPriceImpact, inUSD, priceToUsd } from '../data/helpers'
-import { Token } from '../data/interfaces'
+import { checkPriceImpact, inUSD, priceToUsd } from '../utils/helpers'
+import { Token } from '../utils/interfaces'
 
 export const SwapCard = ({
 	isConnected,

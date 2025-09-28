@@ -1,3 +1,9 @@
+export const shortenAddress = (address: string) => {
+	const firstPart = address.slice(0, 5)
+	const secondPart = address.slice(35, -1)
+	return firstPart + '...' + secondPart
+}
+
 const getPrice = async () => {
 	return await (
 		await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd`)
@@ -28,8 +34,8 @@ export const inUSD = async (amount: string) => {
 import { BrowserProvider, Contract, JsonRpcProvider, formatEther, formatUnits } from 'ethers'
 import { Token } from './interfaces'
 
-const oneInchAggrAddress = '0x07d91f5fb9bf7798734c3f606db065549f6893bb'
-const oneInchAggr_ABI = [
+export const oneInchAggrAddress = '0x07d91f5fb9bf7798734c3f606db065549f6893bb'
+export const oneInchAggr_ABI = [
 	{
 		inputs: [
 			{
@@ -91,7 +97,7 @@ export async function priceToUsd(amount: string) {
 	return String(formatted1InchAmount)
 }
 
-const convertTokensAddressesToMainnet = (aToken: Token) => {
+export const convertTokensAddressesToMainnet = (aToken: Token) => {
 	switch (true) {
 		case /U[a-zA-Z]?S[a-zA-Z]?D[a-zA-Z]?T/i.test(aToken.symbol):
 			// console.log('USDT!!!');
@@ -113,7 +119,7 @@ const convertTokensAddressesToMainnet = (aToken: Token) => {
 	}
 }
 
-const getOneInchAmount = (
+export const getOneInchAmount = (
 	fromToken: Token,
 	toToken: Token,
 	oneInchRate: bigint,

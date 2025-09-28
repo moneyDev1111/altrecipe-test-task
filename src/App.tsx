@@ -13,12 +13,12 @@ import { Button, Tooltip, useMediaQuery } from '@mui/material'
 import { useWeb3Modal } from '@web3modal/ethers/react'
 import { SwapCard } from './components/SwapCard'
 import { useState } from 'react'
-import { Token } from './data/interfaces'
-import { tokens } from './data/evm'
-// 1. Get projectId
-const projectId = '6bb7a5f6-9b96-48f9-aef8-d24a655de07d'
+import { Token } from './utils/interfaces'
+import { tokens } from './utils/evm'
+import { shortenAddress } from './utils/helpers'
 
-// 2. Set chains
+const projectId = 'b9e6d28dc1ad59a98ef17279b1f38bff'
+
 const mainnet = {
 	chainId: 1,
 	name: 'Ethereum',
@@ -33,12 +33,12 @@ const sepolia = {
 	explorerUrl: 'https://sepolia.etherscan.io/',
 	rpcUrl: 'https://1rpc.io/sepolia',
 }
-// 3. Create a metadata object
+
 const metadata = {
-	name: 'My Website',
-	description: 'My Website description',
-	url: 'https://mywebsite.com', // origin must match your domain & subdomain
-	icons: ['https://avatars.mywebsite.com/'],
+	name: 'Alt recipe test task',
+	description: 'Alt recipe test task description',
+	url: 'https://dex-swap-nine.vercel.app/',
+	icons: [],
 }
 
 const ethersConfig = defaultConfig({
@@ -57,11 +57,6 @@ createWeb3Modal({
 	enableAnalytics: false, // Optional - defaults to your Cloud configuration
 })
 
-const shortenAddress = (address: string) => {
-	const firstPart = address.slice(0, 5)
-	const secondPart = address.slice(35, -1)
-	return firstPart + '...' + secondPart
-}
 export default function App() {
 	const { address, chainId, isConnected } = useWeb3ModalAccount()
 	const { walletProvider } = useWeb3ModalProvider()

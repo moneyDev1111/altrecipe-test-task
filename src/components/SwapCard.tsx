@@ -80,7 +80,7 @@ export const SwapCard = ({
 				const signer = await provider.getSigner()
 
 				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
-				const WETH_Contract = new Contract(tokenAddress!, WETH_ABI)
+				const WETH_Contract = new Contract(tokenAddress!, WETH_ABI, provider)
 
 				if (tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH') {
 					//@ts-ignore
@@ -460,7 +460,7 @@ export const SwapCard = ({
 				variant="outlined"
 				endIcon={!isPending ? <AccountBalanceWalletIcon /> : null}
 				sx={{ fontSize: '1.25rem', width: '75%', margin: '1em auto 0 auto' }}
-				onClick={(e) => sendTx()}
+				onClick={sendTx}
 			>
 				{!isPending ? (
 					tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH' ? (

@@ -179,89 +179,97 @@ export const SwapCard = ({
 		getBalance()
 	}, [tokenFrom])
 
-	// const estimateFees = async () => {
-	// 	try {
-	// 		if (walletProvider) {
-	// 			const provider = new BrowserProvider(walletProvider!);
-	// 			const signer = await provider.getSigner();
-	// 			let gasFetched = false;
-	// 			let gasPrice: bigint = BigInt(0);
+	const estimateFees = async () => {
+		try {
+			if (walletProvider) {
+				const provider = new BrowserProvider(walletProvider!)
+				const signer = await provider.getSigner()
+				let gasFetched = false
+				let gasPrice: bigint = BigInt(0)
+				const decimals = 18
+				while (!gasFetched) {
+					try {
+						const res = await provider.getBlock('latest')
+						const res2 = await provider.getFeeData()
+						if (res?.baseFeePerGas && res2?.maxPriorityFeePerGas) {
+							console.log(res.baseFeePerGas)
+							console.log(res2.maxPriorityFeePerGas)
 
-	// 			while (!gasFetched) {
-	// 				try {
-	// 					const res = await provider.getBlock('latest');
-	// 					const res2 = await provider.getFeeData();
-	// 					if (res?.baseFeePerGas && res2?.maxPriorityFeePerGas) {
-	// 						console.log(res.baseFeePerGas);
-	// 						console.log(res2.maxPriorityFeePerGas);
+							const fees = res.baseFeePerGas + res2.maxPriorityFeePerGas
+							gasPrice = fees
+							gasFetched = true
+						}
+					} catch (error) {
+						console.log(error)
+						await new Promise((r) => setTimeout(r, 1000))
+					}
+				}
 
-	// 						const fees = res.baseFeePerGas + res2.maxPriorityFeePerGas;
-	// 						gasPrice = fees;
-	// 						gasFetched = true;
-	// 					}
-	// 				} catch (error) {
-	// 					console.log(error);
-	// 					await new Promise((r) => setTimeout(r, 1000));
-	// 				}
-	// 			}
+				const tokenContract = new Contract(
+					tokenTo.address,
+					tokenTo.symbol ? WETH_ABI : Erc20_ABI,
+					provider
+				)
 
-	// 				const tokenContract = new Contract(tokenTo.address,tokenTo.symbol ? WETH_ABI: Erc20_ABI);
+				const tx = {
+					to: tokenContract.target,
+					data:
+						tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH'
+							? tokenContract.interface.encodeFunctionData('deposit')
+							: tokenContract.interface.encodeFunctionData('withdraw', [
+									parseUnits(amountFrom, decimals),
+							  ]),
+					from: signer.address,
+				}
 
-	// 				const tx = {
-	// 					to: tokenContract.target,
-	// 					data:
-	// 						tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH'
-	// 							? WETH_Contract.interface.encodeFunctionData('deposit')
-	// 							: WETH_Contract.interface.encodeFunctionData('withdraw', [parseUnits(amountFrom, decimals)]),
-	// 					from: signer.address,
-	// 				};
+				console.log(await provider.estimateGas(tx))
 
-	// 				console.log(await provider.estimateGas(tx));
+				const fee = (await provider.estimateGas(tx)) * gasPrice
 
-	// 				const fee = (await provider.estimateGas(tx)) * gasPrice;
-
-	// 				const amountOut = parseUnits(amountFrom, decimals) - fee;
-	// 				return { fee, amountOut, decimals };
-	// 		}
-	// 	} catch (error) {
-	// 		setIsLoading(false);
-
-	// 		console.log(error);
-	// 	}
-	// };
+				const amountOut = parseUnits(amountFrom, decimals) - fee
+				return { fee, amountOut, decimals }
+			}
+		} catch (error) {
+			console.log(error)
+		}
+	}
 
 	useEffect(() => {
 		debounceRef.current && clearTimeout(debounceRef.current)
 
 		if (+amountFrom > 0 && !/e\-\d*/.test(amountFrom)) {
 			debounceRef.current = setTimeout(async () => {
-				// const res = await estimateFees();
+				const res = await estimateFees()
 
-				// if (res) {
-				// const { fee, amountOut, decimals } = res;
-				// setAmountTo(formatUnits(amountOut, decimals));
-				// console.log('FEE', formatEther(fee));
+				if (res) {
+					const { fee, amountOut, decimals } = res
+					setAmountTo(formatUnits(amountOut, decimals))
+					console.log('FEE', formatEther(fee))
 
-				// checkPriceImpact(tokenFrom, tokenTo, formatEther(fee)).then((res) => setFeeUSD(res));
-				// checkPriceImpact(tokenFrom, tokenTo, formatEther(amountOut - fee)).then((res) => setAmountOutUSD(res));
-				if (
-					(tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH') ||
-					(tokenFrom.symbol === 'WETH' && tokenTo.symbol === 'ETH')
-				) {
-					setAmountTo(amountFrom) // ADD MINUS FEE !!!
-					setAmountOutUSD((await inUSD(amountFrom)) ?? '')
-				} else {
-					checkPriceImpact(tokenFrom, tokenTo, amountFrom).then(async (res) => {
-						setAmountTo(res)
-						setAmountOutUSD(tokenTo.symbol === 'ETH' ? await priceToUsd(res) : res)
-					})
+					checkPriceImpact(tokenFrom, tokenTo, formatEther(fee)).then((res) =>
+						setFeeUSD(res)
+					)
+					checkPriceImpact(tokenFrom, tokenTo, formatEther(amountOut - fee)).then((res) =>
+						setAmountOutUSD(res)
+					)
+					if (
+						(tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH') ||
+						(tokenFrom.symbol === 'WETH' && tokenTo.symbol === 'ETH')
+					) {
+						setAmountTo(amountFrom) // ADD MINUS FEE !!!
+						setAmountOutUSD((await inUSD(amountFrom)) ?? '')
+					} else {
+						checkPriceImpact(tokenFrom, tokenTo, amountFrom).then(async (res) => {
+							setAmountTo(res)
+							setAmountOutUSD(tokenTo.symbol === 'ETH' ? await priceToUsd(res) : res)
+						})
+					}
+
+					setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '')
+					await new Promise((r) => setTimeout(r, 1000))
+					setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '')
+					console.log('IN USD', (await inUSD(formatUnits(amountOut, decimals))) ?? '')
 				}
-
-				// setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '');
-				// await new Promise((r) => setTimeout(r, 1000));
-				// setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '');
-				// console.log('IN USD', (await inUSD(formatUnits(amountOut, decimals))) ?? '');
-				// }
 			}, 300)
 		} else {
 			setAmountTo(amountFrom)

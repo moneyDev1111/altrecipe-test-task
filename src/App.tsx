@@ -31,7 +31,7 @@ const sepolia = {
 	name: 'Sepolia',
 	currency: 'ETH',
 	explorerUrl: 'https://sepolia.etherscan.io/',
-	rpcUrl: 'https://rpc.ankr.com/eth_sepolia',
+	rpcUrl: 'https://1rpc.io/sepolia',
 }
 // 3. Create a metadata object
 const metadata = {
@@ -43,13 +43,7 @@ const metadata = {
 
 // 4. Create Ethers config
 const ethersConfig = defaultConfig({
-	/*Required*/
 	metadata,
-
-	/*Optional*/
-	enableEIP6963: true, // true by default
-	enableInjected: true, // true by default
-	enableCoinbase: true, // true by default
 })
 
 // 5. Create a Web3Modal instance
@@ -62,7 +56,7 @@ createWeb3Modal({
 	ethersConfig,
 	chains: [sepolia],
 	projectId,
-	enableAnalytics: true, // Optional - defaults to your Cloud configuration
+	enableAnalytics: false, // Optional - defaults to your Cloud configuration
 })
 
 const shortenAddress = (address: string) => {

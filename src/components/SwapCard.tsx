@@ -88,27 +88,25 @@ export const SwapCard = ({
 					})
 
 					const txRes: TransactionReceipt = await res.wait()
+					if (!txRes.status) throw Error('Tx Error')
+
 					console.log(txRes)
 
-					if (txRes.status === 1) {
-						setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`)
-
-						setOpenSnack(true)
-					}
+					setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`)
+					setOpenSnack(true)
 				} else {
 					//@ts-ignore
 					const res = await WETH_Contract.connect(signer).withdraw(
 						parseUnits(amountFrom, 18)
 					)
+
 					const txRes = await res.wait()
+					if (!txRes.status) throw Error('Tx Error')
 
 					console.log(txRes)
 
-					if (txRes.status === 1) {
-						setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`)
-
-						setOpenSnack(true)
-					}
+					setTxHashLink(`https://sepolia.etherscan.io/tx/${txRes.hash}`)
+					setOpenSnack(true)
 				}
 				provider.destroy()
 			} catch (error) {

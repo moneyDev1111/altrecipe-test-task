@@ -70,7 +70,8 @@ export const SwapCard = ({
 
 	const [txHashLink, setTxHashLink] = useState('')
 
-	const isMobile = useMediaQuery('(max-width:900px)')
+	const isTablet = useMediaQuery('(max-width:970px)')
+	const isMobile = useMediaQuery('(max-width:700px)')
 	const sendTx = () => {
 		startTransition(async () => {
 			if (!walletProvider || !accountAddress) return
@@ -305,7 +306,7 @@ export const SwapCard = ({
 				padding: '1em',
 				display: 'flex',
 				flexDirection: 'column',
-				width: isMobile ? '80%' : '44%',
+				width: isMobile ? '90%' : isTablet ? '70%' : '44%',
 
 				margin: '0 auto',
 				gap: '1.2vh',

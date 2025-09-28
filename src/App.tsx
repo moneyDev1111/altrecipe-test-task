@@ -41,12 +41,10 @@ const metadata = {
 	icons: ['https://avatars.mywebsite.com/'],
 }
 
-// 4. Create Ethers config
 const ethersConfig = defaultConfig({
 	metadata,
 })
 
-// 5. Create a Web3Modal instance
 createWeb3Modal({
 	// themeVariables: {
 	// 	'--w3m-color-mix': '#00BB7F',

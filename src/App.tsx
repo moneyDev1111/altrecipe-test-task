@@ -8,7 +8,7 @@ import {
 	useWeb3ModalProvider,
 } from '@web3modal/ethers/react'
 
-import { Button, Tooltip } from '@mui/material'
+import { Button, Tooltip, useMediaQuery } from '@mui/material'
 
 import { useWeb3Modal } from '@web3modal/ethers/react'
 import { SwapCard } from './components/SwapCard'
@@ -71,12 +71,13 @@ export default function App() {
 	const [wethBalance, setWethBalance] = useState('')
 	const [tokenFrom, setTokenFrom] = useState<Token>(tokens[0])
 	const [tokenTo, setTokenTo] = useState<Token>(tokens[1])
+	const isMobile = useMediaQuery('(max-width:900px)')
 
 	return (
 		<Container
 			sx={{
 				minHeight: '100vh',
-				width: '80%',
+				width: isMobile ? '100%' : '80%',
 				display: 'flex',
 				flexDirection: 'column',
 				justifyContent: 'space-between',

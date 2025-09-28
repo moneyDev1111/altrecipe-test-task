@@ -13,23 +13,13 @@ button.btn-wallet__connect {
 
 	font-size: 1.1rem;
 	text-transform: none;
+	transition: background-color 0.5s ease;
+
 	&:hover {
-		animation: colorChange 3s forwards;
-		background-color: rgb(19, 20, 37);
+		background-color: #190e26;
 	}
 }
 
-@keyframes colorChange {
-	0% {
-		background-color: rgb(29, 24, 47);
-	}
-	20% {
-		background-color: rgb(37, 103, 126);
-	}
-	100% {
-		background-color: rgb(16, 12, 24);
-	}
-}
 div.card-swap {
 	box-shadow: hsl(0deg 0% 95.12% / 14%) 3px 3px;
 }

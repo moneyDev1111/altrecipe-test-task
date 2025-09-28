@@ -134,7 +134,7 @@ export default function App() {
 				/>
 			</Box>
 			<Box className="sign" textAlign={'center'} fontSize={12}>
-				{`made by moneyDev1111 \u00A9 ${new Date().getFullYear()}`}
+				{`made by moneyDev1111 \u00A9 2024`}
 			</Box>
 		</Container>
 	)

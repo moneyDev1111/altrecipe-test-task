@@ -14,6 +14,7 @@ import {
 	TextField,
 	Tooltip,
 	Typography,
+	useMediaQuery,
 } from '@mui/material'
 
 import {
@@ -69,6 +70,7 @@ export const SwapCard = ({
 
 	const [txHashLink, setTxHashLink] = useState('')
 
+	const isMobile = useMediaQuery('(max-width:900px)')
 	const sendTx = () => {
 		startTransition(async () => {
 			if (!walletProvider || !accountAddress) return
@@ -303,7 +305,8 @@ export const SwapCard = ({
 				padding: '1em',
 				display: 'flex',
 				flexDirection: 'column',
-				width: '44%',
+				width: isMobile ? '80%' : '44%',
+
 				margin: '0 auto',
 				gap: '1.2vh',
 				borderRadius: '10px',
@@ -345,7 +348,7 @@ export const SwapCard = ({
 							// setAmountFrom(e.target.value);
 						}}
 					/>
-					<FormControl sx={{ width: '10vw' }}>
+					<FormControl sx={{ width: isMobile ? '20vw' : '10vw' }}>
 						<InputLabel id="from-select-label">From</InputLabel>
 						<Select
 							labelId="from-select-label"
@@ -388,7 +391,7 @@ export const SwapCard = ({
 							else setAmountTo(e.target.value)
 						}}
 					/>
-					<FormControl sx={{ width: '10vw' }}>
+					<FormControl sx={{ width: isMobile ? '20vw' : '10vw' }}>
 						<InputLabel id="to-select-label">To</InputLabel>
 
 						<Select

@@ -73,10 +73,9 @@ export const SwapCard = ({
 		startTransition(async () => {
 			if (!walletProvider || !accountAddress) return
 
-			console.log('WALLET PROVIDER', walletProvider)
+			const provider = new BrowserProvider(walletProvider)
 
 			try {
-				const provider = new BrowserProvider(walletProvider)
 				const signer = await provider.getSigner()
 
 				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
@@ -111,18 +110,19 @@ export const SwapCard = ({
 						setOpenSnack(true)
 					}
 				}
+				provider.destroy()
 			} catch (error) {
 				console.log(error)
+				provider.destroy()
 			}
 		})
 	}
 
 	const getBalance = async () => {
 		if (!walletProvider || !accountAddress) return
+		const provider = new BrowserProvider(walletProvider)
 
 		try {
-			const provider = new BrowserProvider(walletProvider)
-
 			if (tokenFrom.symbol === 'ETH') {
 				const ethBalance = formatUnits(await provider.getBalance(accountAddress), 18)
 				setTokenBalance(ethBalance)
@@ -141,8 +141,10 @@ export const SwapCard = ({
 				setTokenBalance(formatUnits(await tokenContract.balanceOf(accountAddress)))
 				// }
 			}
+			provider.destroy()
 		} catch (error: any) {
 			console.log(error)
+			provider.destroy()
 		}
 	}
 

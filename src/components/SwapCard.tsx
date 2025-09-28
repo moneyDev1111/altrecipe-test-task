@@ -182,11 +182,14 @@ export const SwapCard = ({
 	const estimateFees = async () => {
 		try {
 			if (walletProvider) {
+				const decimals = 18
+
 				const provider = new BrowserProvider(walletProvider!)
 				const signer = await provider.getSigner()
+
 				let gasFetched = false
 				let gasPrice: bigint = BigInt(0)
-				const decimals = 18
+
 				while (!gasFetched) {
 					try {
 						const res = await provider.getBlock('latest')
@@ -266,7 +269,7 @@ export const SwapCard = ({
 					}
 
 					setFeeUSD((await inUSD(formatUnits(fee, decimals))) ?? '')
-					await new Promise((r) => setTimeout(r, 1000))
+					// await new Promise((r) => setTimeout(r, 1000))
 					setAmountOutUSD((await inUSD(formatUnits(amountOut, decimals))) ?? '')
 					console.log('IN USD', (await inUSD(formatUnits(amountOut, decimals))) ?? '')
 				}

@@ -73,6 +73,8 @@ export const SwapCard = ({
 		startTransition(async () => {
 			if (!walletProvider || !accountAddress) return
 
+			console.log('WALLET PROVIDER', walletProvider)
+
 			try {
 				const provider = new BrowserProvider(walletProvider)
 				const signer = await provider.getSigner()
@@ -80,14 +82,13 @@ export const SwapCard = ({
 				const tokenAddress = tokens.find((token) => token.symbol === 'WETH')?.address
 				const WETH_Contract = new Contract(tokenAddress!, WETH_ABI)
 
-				if (tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH' && walletProvider) {
+				if (tokenFrom.symbol === 'ETH' && tokenTo.symbol === 'WETH') {
 					//@ts-ignore
 					const res = await WETH_Contract.connect(signer).deposit({
 						value: parseUnits(amountTo, 18),
 					})
 
 					const txRes: TransactionReceipt = await res.wait()
-
 					console.log(txRes)
 
 					if (txRes.status === 1) {
@@ -265,6 +266,7 @@ export const SwapCard = ({
 		} else {
 			setAmountTo(amountFrom)
 		}
+
 		return () => clearTimeout(debounceRef.current)
 	}, [amountFrom])
 

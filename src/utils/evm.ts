@@ -232,3 +232,40 @@ export const tokens = [
 	// { symbol: 'WBTC', decimals: 8, address: '0x92f3B59a79bFf5dc60c0d59eA13a44D082B2bdFC' },
 	{ symbol: 'WETH', decimals: 18, address: '0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9' },
 ] as const
+
+export const oneInchAggrAddress = '0x07d91f5fb9bf7798734c3f606db065549f6893bb'
+export const oneInchAggr_ABI = [
+	{
+		inputs: [
+			{
+				internalType: 'contract IERC20',
+				name: 'srcToken',
+				type: 'address',
+			},
+			{
+				internalType: 'contract IERC20',
+				name: 'dstToken',
+				type: 'address',
+			},
+			{ internalType: 'bool', name: 'useWrappers', type: 'bool' },
+		],
+		name: 'getRate',
+		outputs: [{ internalType: 'uint256', name: 'weightedRate', type: 'uint256' }],
+		stateMutability: 'view',
+		type: 'function',
+	},
+	{
+		inputs: [
+			{
+				internalType: 'contract IERC20',
+				name: 'srcToken',
+				type: 'address',
+			},
+			{ internalType: 'bool', name: 'useSrcWrappers', type: 'bool' },
+		],
+		name: 'getRateToEth',
+		outputs: [{ internalType: 'uint256', name: 'weightedRate', type: 'uint256' }],
+		stateMutability: 'view',
+		type: 'function',
+	},
+]

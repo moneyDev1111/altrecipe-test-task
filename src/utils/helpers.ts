@@ -1,3 +1,7 @@
+import { Contract, JsonRpcProvider, formatEther } from 'ethers'
+import { Token } from './interfaces'
+import { oneInchAggr_ABI, oneInchAggrAddress } from './evm'
+
 export const shortenAddress = (address: string) => {
 	const firstPart = address.slice(0, 5)
 	const secondPart = address.slice(35, -1)
@@ -9,8 +13,6 @@ const getPrice = async () => {
 		await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd`)
 	).json()
 }
-
-// let prevPrice = 0;
 
 export const inUSD = async (amount: string) => {
 	try {
@@ -31,51 +33,9 @@ export const inUSD = async (amount: string) => {
 	}
 }
 
-import { BrowserProvider, Contract, JsonRpcProvider, formatEther, formatUnits } from 'ethers'
-import { Token } from './interfaces'
-
-export const oneInchAggrAddress = '0x07d91f5fb9bf7798734c3f606db065549f6893bb'
-export const oneInchAggr_ABI = [
-	{
-		inputs: [
-			{
-				internalType: 'contract IERC20',
-				name: 'srcToken',
-				type: 'address',
-			},
-			{
-				internalType: 'contract IERC20',
-				name: 'dstToken',
-				type: 'address',
-			},
-			{ internalType: 'bool', name: 'useWrappers', type: 'bool' },
-		],
-		name: 'getRate',
-		outputs: [{ internalType: 'uint256', name: 'weightedRate', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-	{
-		inputs: [
-			{
-				internalType: 'contract IERC20',
-				name: 'srcToken',
-				type: 'address',
-			},
-			{ internalType: 'bool', name: 'useSrcWrappers', type: 'bool' },
-		],
-		name: 'getRateToEth',
-		outputs: [{ internalType: 'uint256', name: 'weightedRate', type: 'uint256' }],
-		stateMutability: 'view',
-		type: 'function',
-	},
-]
-
 export async function priceToUsd(amount: string) {
 	const provider = new JsonRpcProvider('https://rpc.ankr.com/eth')
 	const toToken = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-
-	// const formattedAmountOut = formatUnits(amount, 6);
 
 	const oneInchAggrContract = new Contract(oneInchAggrAddress, oneInchAggr_ABI, provider)
 	// USE getRateToEth IF TOKEN IS NATIVE
@@ -154,57 +114,63 @@ export async function checkPriceImpact(
 	quoteAmount: string | bigint
 	// dexId?: string
 ) {
-	console.log('CHECKING PRICE IMPACT BEFORE SWAP...')
+	try {
+		console.log('CHECKING PRICE IMPACT BEFORE SWAP...')
 
-	// const formattedAmountOut = parseFloat(formatUnits(quoteAmount, toToken.decimals || 18));
+		// const formattedAmountOut = parseFloat(formatUnits(quoteAmount, toToken.decimals || 18));
 
-	// get tokens mainnet addresses
-	const fromTokenMainnet = convertTokensAddressesToMainnet(fromToken)
-	const toTokenMainnet = convertTokensAddressesToMainnet(toToken)
+		// get tokens mainnet addresses
+		const fromTokenMainnet = convertTokensAddressesToMainnet(fromToken)
+		const toTokenMainnet = convertTokensAddressesToMainnet(toToken)
 
-	const provider = new JsonRpcProvider('https://ethereum-rpc.publicnode.com')
+		const provider = new JsonRpcProvider('https://ethereum-rpc.publicnode.com')
 
-	const oneInchAggrContract = new Contract(oneInchAggrAddress, oneInchAggr_ABI, provider)
+		const oneInchAggrContract = new Contract(oneInchAggrAddress, oneInchAggr_ABI, provider)
 
-	// USE getRateToEth IF TOKEN IS NATIVE
-	const oneInchRate: bigint =
-		fromToken.symbol === 'ETH'
-			? await oneInchAggrContract.getRateToEth(toTokenMainnet, true)
-			: await oneInchAggrContract.getRate(
-					fromTokenMainnet,
-					toTokenMainnet,
-					toToken.symbol === 'ETH' ? true : false
-			  )
-	// STOP IF RATE IS 0 ( the params are incorrect, mainly the useWrappers bool )
-	if (oneInchRate === 0n) throw new Error('Error getting the 1inch Rate')
+		// USE getRateToEth IF TOKEN IS NATIVE
+		const oneInchRate: bigint =
+			fromToken.symbol === 'ETH'
+				? await oneInchAggrContract.getRateToEth(toTokenMainnet, true)
+				: await oneInchAggrContract.getRate(
+						fromTokenMainnet,
+						toTokenMainnet,
+						toToken.symbol === 'ETH' ? true : false
+				  )
+		// STOP IF RATE IS 0 ( the params are incorrect, mainly the useWrappers bool )
+		if (oneInchRate === 0n) throw new Error('Error getting the 1inch Rate')
 
-	const formatted1InchAmount = parseFloat(
-		getOneInchAmount(fromToken, toToken, oneInchRate, quoteAmount)
-	)
+		const formatted1InchAmount = parseFloat(
+			getOneInchAmount(fromToken, toToken, oneInchRate, quoteAmount)
+		)
 
-	// console.log('1inch AMOUNT OUT', formatted1InchAmount);
-	// console.log('AMOUNT OUT      ', formattedAmountOut);
+		// console.log('1inch AMOUNT OUT', formatted1InchAmount);
+		// console.log('AMOUNT OUT      ', formattedAmountOut);
 
-	// // COMPARE OUTPUT AMOUNTS AND DECIDE WHETHER TO DO THE SWAP!
-	// if (
-	// 	formatted1InchAmount > formattedAmountOut &&
-	// 	formatted1InchAmount - formattedAmountOut > formatted1InchAmount * (2 / 100) // IF DIFFENCE IS MORE THEN x%
-	// ) {
-	// 	provider?.destroy();
-	// 	throw Error('PRICE IMPACT TOO HIGH !!! ');
-	// 	// } else if (
-	// 	// 	// if 1 inch amount is less then amount from the swap itself the dif is bigger then x%
-	// 	// 	formatted1InchAmount < formattedAmountOut &&
-	// 	// 	formattedAmountOut - formatted1InchAmount >
-	// 	// 		formatted1InchAmount * (priceImpact / 100)
-	// 	// ) {
-	// 	// 	throw new Error("Sth's wrong with 1inch");
-	// } else {
-	// 	provider?.destroy();
+		// // COMPARE OUTPUT AMOUNTS AND DECIDE WHETHER TO DO THE SWAP!
+		// if (
+		// 	formatted1InchAmount > formattedAmountOut &&
+		// 	formatted1InchAmount - formattedAmountOut > formatted1InchAmount * (2 / 100) // IF DIFFENCE IS MORE THEN x%
+		// ) {
+		// 	provider?.destroy();
+		// 	throw Error('PRICE IMPACT TOO HIGH !!! ');
+		// 	// } else if (
+		// 	// 	// if 1 inch amount is less then amount from the swap itself the dif is bigger then x%
+		// 	// 	formatted1InchAmount < formattedAmountOut &&
+		// 	// 	formattedAmountOut - formatted1InchAmount >
+		// 	// 		formatted1InchAmount * (priceImpact / 100)
+		// 	// ) {
+		// 	// 	throw new Error("Sth's wrong with 1inch");
+		// } else {
+		// 	provider?.destroy();
 
-	// 	// throw Error('GOOD AMOUNT!');
-	// 	console.log('GOOD AMOUNT!');
-	// }
-	provider.destroy()
-	return String(formatted1InchAmount)
+		// 	// throw Error('GOOD AMOUNT!');
+		// 	console.log('GOOD AMOUNT!');
+		// }
+
+		provider.destroy()
+		return String(formatted1InchAmount)
+	} catch (error) {
+		console.log(error)
+		return ''
+	}
 }
